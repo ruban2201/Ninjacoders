@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:usg_app_user/screens/login_screen.dart';
 import 'package:usg_app_user/screens/register_screen.dart';
+import 'package:usg_app_user/splashScreen/splash_screen.dart';
 import 'package:usg_app_user/themeProvider/theme_provider.dart';
 
 // Future<void> main() async{
@@ -30,7 +32,7 @@ class MyApp extends StatelessWidget {
       theme: MyThemes.lightTheme,
       darkTheme: MyThemes.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: const RegisterScreen(),
+      home: const SplashScreen(),
     );
   }
 }
