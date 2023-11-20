@@ -1,7 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:usg_app_user/screens/login_screen.dart';
-import 'package:usg_app_user/screens/register_screen.dart';
 import 'package:usg_app_user/splashScreen/splash_screen.dart';
 import 'package:usg_app_user/themeProvider/theme_provider.dart';
 

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:usg_app_user/Assistants/assistant_methods.dart';
 import 'package:usg_app_user/global/global.dart';
 import 'package:usg_app_user/screens/login_screen.dart';
-import 'package:usg_app_user/screens/main_page.dart';
+import 'package:usg_app_user/screens/main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,15 +16,15 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
 
   startTimer(){
-    Timer(Duration(seconds: 3), () async {
-      if(await firebaseAuth.currentUser != null) {
+    Timer(const Duration(seconds: 3), () async {
+      if(firebaseAuth.currentUser != null) {
         firebaseAuth.currentUser != null ? AssistantMethods
             .readCurrentOnlineUserInfo() : null;
         Navigator.push(
-            context, MaterialPageRoute(builder: (c) => MainScreen()));
+            context, MaterialPageRoute(builder: (c) => const MainScreen()));
       }
       else{
-        Navigator.push(context, MaterialPageRoute(builder: (c) => LoginScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (c) => const LoginScreen()));
       }
     });
   }
