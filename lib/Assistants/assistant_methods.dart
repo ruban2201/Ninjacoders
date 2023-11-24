@@ -1,11 +1,14 @@
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 import 'package:usg_app_user/Assistants/request_assistant.dart';
 import 'package:usg_app_user/global/global.dart';
 import 'package:usg_app_user/global/map_key.dart';
 import 'package:usg_app_user/models/directions.dart';
 import 'package:usg_app_user/models/user_model.dart';
+
+import '../infoHandler/app_info.dart';
 
 class AssistantMethods {
 
@@ -38,7 +41,7 @@ class AssistantMethods {
       userPickUpAddress.locationLongitude = position.longitude;
       userPickUpAddress.locationName = humanReadableAddress;
 
-      //Provider.of<AppInfo>(context, listen: false).updatePickUpLocationAddress(userPickUpAddress);
+      Provider.of<AppInfo>(context, listen: false).updatePicUpLocationAddress(userPickUpAddress);
     }
 
     return humanReadableAddress;
