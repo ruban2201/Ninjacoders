@@ -220,7 +220,6 @@ class _MainScreenState extends State<MainScreen> {
                                               : "Not Getting Address",
                                             style: TextStyle(color: Colors.grey, fontSize: 14),
                                           )
-
                                         ],
                                       )
                                     ],
@@ -267,18 +266,15 @@ class _MainScreenState extends State<MainScreen> {
                                       ],
                                     ),
                                   ),
-                                ),
-
-                          ),
+                                )
+                                ],
+                          )
                           ),
                         ],
                       ),
-
                     ),
                   ],
-                )
-
-
+                ),
             ),
             ),
 

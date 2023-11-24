@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:usg_app_user/models/predicted_places.dart';
 
-abstract class SearchPlacesScreen extends StatefulWidget {
+
+class SearchPlacesScreen extends StatefulWidget {
   const SearchPlacesScreen({Key? key}) : super(key: key);
 
   @override
@@ -101,12 +101,12 @@ abstract class SearchPlacesScreen extends StatefulWidget {
           ),
 
             //display place predictions result
-            (placesPredictedList.length > 0
+            (placesPredictedList.length > 0)
                 ? Expanded(
               child: ListView.separated(
                 itemCount: placesPredictedList.length,
                 physics: ClampingScrollPhysics(),
-                itemBuilder: (context, index), {
+                itemBuilder: (context, index) {
                   return
               },
               separatorBuilder: separatorBuilder,
