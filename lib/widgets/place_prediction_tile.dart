@@ -63,6 +63,7 @@ class _PlacePredictionTileDesignState extends State<PlacePredictionTileDesign> {
 
     return ElevatedButton(
         onPressed: () {
+          getPlaceDirectionDetails(widget.predictedPlaces!.place_id!, context);
         },
         style: ElevatedButton.styleFrom(
           primary: darkTheme ? Colors.black : Colors.white,

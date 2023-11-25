@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:usg_app_user/Assistants/assistant_methods.dart';
 import 'package:usg_app_user/global/global.dart';
 import 'package:usg_app_user/global/map_key.dart';
+import 'package:usg_app_user/screens/search_places_screen.dart';
 
 import '../infoHandler/app_info.dart';
 import '../models/directions.dart';
@@ -238,7 +239,17 @@ class _MainScreenState extends State<MainScreen> {
                                 Padding(
                                   padding: EdgeInsets.all(5),
                                   child: GestureDetector(
-                                    onTap: () {
+                                    onTap: () async {
+                                      //go to search places screen
+                                      var responseFromSearchScreen = await Navigator.push(context, MaterialPageRoute(builder: (c) => SearchPlacesScreen()));
+
+                                      if(responseFromSearchScreen == "obtainedDropoff"){
+                                        setState(() {
+                                          openNavigationDrawer = false;
+                                        });
+                                      }
+
+                                      //await drawPolyLineFromOriginToDestination(darkTheme);
 
                                     },
                                     child:Row(
@@ -256,7 +267,7 @@ class _MainScreenState extends State<MainScreen> {
                                               ),
                                             ),
                                             Text(Provider.of<AppInfo>(context).userDropOffLocation != null
-                                                ? (Provider.of<AppInfo>(context).userDropOffLocation!.locationName!).substring(0, 24) + "...."
+                                                ? Provider.of<AppInfo>(context).userDropOffLocation!.locationName!
                                                 : "Where to?",
                                               style: TextStyle(color: Colors.grey, fontSize: 14),
                                             )

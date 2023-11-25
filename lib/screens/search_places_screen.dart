@@ -33,7 +33,7 @@ class SearchPlacesScreen extends StatefulWidget {
         var placePredictionsList = (placePredictions as List).map((jsonData) => PredictedPlaces.fromJson(jsonData)).toList();
 
         setState(() {
-          placesPredictedList = placesPredictedList;
+          placesPredictedList = placePredictionsList;
         });
       }
     }
