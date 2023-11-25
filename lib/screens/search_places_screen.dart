@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:usg_app_user/Assistants/request_assistant.dart';
+import 'package:usg_app_user/global/map_key.dart';
+import 'package:usg_app_user/widgets/place_prediction_tile.dart';
+
+import '../models/predicted_places.dart';
 
 
 class SearchPlacesScreen extends StatefulWidget {
@@ -11,7 +16,27 @@ class SearchPlacesScreen extends StatefulWidget {
   class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
 
    List<PredictedPlaces> placesPredictedList =[];
+
   findPlaceAutoCompleteSearch(String inputText) async {
+    if(inputText.length > 1){
+      String urlAutoCompleteSearch = "https://maps/googleapis.com/maps/api/place/autocomplete/json?input=$inputText&key=$mapKey&components=country:MY";
+
+      var responseAutoCompleteSearch = await RequestAssistant.receiveRequest(urlAutoCompleteSearch);
+
+      if(responseAutoCompleteSearch == "Error Occurred. Failed. No Response."){
+        return;
+      }
+
+      if(responseAutoCompleteSearch["status"] == "OK"){
+        var placePredictions = responseAutoCompleteSearch["predictions"];
+
+        var placePredictionsList = (placePredictions as List).map((jsonData) => PredictedPlaces.fromJson(jsonData)).toList();
+
+        setState(() {
+          placesPredictedList = placesPredictedList;
+        });
+      }
+    }
 
 }
 
@@ -107,11 +132,19 @@ class SearchPlacesScreen extends StatefulWidget {
                 itemCount: placesPredictedList.length,
                 physics: ClampingScrollPhysics(),
                 itemBuilder: (context, index) {
-                  return
+                  return PlacePredictionTileDesign(
+                    predictedPlaces: placesPredictedList[index],
+                  );
               },
-              separatorBuilder: separatorBuilder,
+              separatorBuilder: (BuildContext context, int index) {
+                  return Divider(
+                    height: 0,
+                    color: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                    thickness: 0,
+                  );
+              },
               ),
-            )
+            ) : Container(),
         ],
        ),
      ),

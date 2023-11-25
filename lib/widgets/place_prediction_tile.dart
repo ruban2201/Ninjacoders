@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:usg_app_user/Assistants/request_assistant.dart';
+import 'package:usg_app_user/global/map_key.dart';
+import 'package:usg_app_user/infoHandler/app_info.dart';
+import 'package:usg_app_user/models/directions.dart';
 import 'package:usg_app_user/models/predicted_places.dart';
+import 'package:usg_app_user/widgets/progress_dialog.dart';
+
+import '../global/global.dart';
 
 class PlacePredictionTileDesign extends StatefulWidget {
 
@@ -13,7 +21,40 @@ class PlacePredictionTileDesign extends StatefulWidget {
 
 class _PlacePredictionTileDesignState extends State<PlacePredictionTileDesign> {
 
-  getPlaceDirectionDetails()
+  getPlaceDirectionDetails(String placeId, context) async {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) => ProgressDialog(
+          message: "Setting Up Drop-Off. Please Wait....",
+        )
+    );
+
+    String placeDirectionDetailsUrl = "https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$mapKey";
+
+    var responseApi = await RequestAssistant.receiveRequest(placeDirectionDetailsUrl);
+
+    Navigator.pop(context);
+
+    if(responseApi == "Error Occurred. Failed. No Response."){
+      return;
+    }
+
+    if(responseApi["status"] == "OK"){
+      Directions directions = Directions();
+      directions.locationName = responseApi["result"]["name"];
+      directions.locationId =placeId;
+      directions.locationLatitude = responseApi["result"]["geometry"]["location"]["lat"];
+      directions.locationLongitude = responseApi["result"]["geometry"]["location"]["lng"];
+
+      Provider.of<AppInfo>(context, listen: false).updateDropOffLocationAddress(directions);
+
+      setState(() {
+        userDropOffAddress = directions.locationName!;
+      });
+
+      Navigator.pop(context, "obtainedDropOff");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +63,6 @@ class _PlacePredictionTileDesignState extends State<PlacePredictionTileDesign> {
 
     return ElevatedButton(
         onPressed: () {
-
         },
         style: ElevatedButton.styleFrom(
           primary: darkTheme ? Colors.black : Colors.white,
