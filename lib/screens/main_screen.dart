@@ -62,7 +62,7 @@ class _MainScreenState extends State<MainScreen> {
 
   BitmapDescriptor? activeNearbyIcon;
 
-  get darkTheme => null;
+ // get darkTheme => null;
 
   locateUserPosition() async {
     Position cPostion = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
@@ -98,7 +98,7 @@ class _MainScreenState extends State<MainScreen> {
         userPickUpAddress.locationLongitude = pickLocation!.longitude;
         userPickUpAddress.locationName = data.address;
 
-        Provider.of<AppInfo>(context, listen: false).updatePicUpLocationAddress(userPickUpAddress);
+        Provider.of<AppInfo>(context, listen: false).updatePickUpLocationAddress(userPickUpAddress);
 
         //_address = data.address;
       });
@@ -127,6 +127,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool darkTheme = MediaQuery.of(context).platformBrightness == Brightness.dark;
     var provider;
     return GestureDetector(
       onTap: () {
@@ -187,7 +188,7 @@ class _MainScreenState extends State<MainScreen> {
                       padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: darkTheme ? Colors.black: Colors.white,
-                        borderRadius: BorderRadius.circular(10)
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
                         children:[
@@ -196,14 +197,13 @@ class _MainScreenState extends State<MainScreen> {
                                 color: darkTheme ? Colors.grey.shade900: Colors.grey.shade100,
                                 borderRadius: BorderRadius.circular(10),
                             ),
-
                            child: Column(
                               children: [
                                 Padding(
                                   padding: EdgeInsets.all(5),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.location_on_outlined, color:darkTheme ? Colors.amber.shade400 : Colors.blue,),
+                                     Icon(Icons.location_on_outlined, color: darkTheme ? Colors.amber.shade400 : Colors.blue,),
                                       SizedBox(width: 10,),
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,16 +215,16 @@ class _MainScreenState extends State<MainScreen> {
                                             fontWeight: FontWeight.bold,
                                           ),
                                           ),
-                                          Text(Provider.of<AppInfo>(context).userPickUpLocation != null
-                                              ? (Provider.of<AppInfo>(context).userPickUpLocation!.locationName!).substring(0, 24) + "...."
-                                              : "Not Getting Address",
+                                           Text(Provider.of<AppInfo>(context).userPickUpLocation != null
+                                               ? (Provider.of<AppInfo>(context).userPickUpLocation!.locationName!).substring(0, 24) + "...."
+                                               : "Not Getting Address",
                                             style: TextStyle(color: Colors.grey, fontSize: 14),
                                           )
                                         ],
                                       )
                                     ],
                                   ),
-                           ),
+                                 ),
 
                             SizedBox(height: 5,),
 
@@ -243,7 +243,7 @@ class _MainScreenState extends State<MainScreen> {
                                     },
                                     child:Row(
                                       children: [
-                                        Icon(Icons.location_on_outlined, color:darkTheme ? Colors.amber.shade400 : Colors.blue,),
+                                       Icon(Icons.location_on_outlined, color:darkTheme ? Colors.amber.shade400 : Colors.blue,),
                                         SizedBox(width: 10,),
                                         Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
