@@ -19,7 +19,9 @@ class SearchPlacesScreen extends StatefulWidget {
 
   findPlaceAutoCompleteSearch(String inputText) async {
     if(inputText.length > 1){
-      String urlAutoCompleteSearch = "https://maps/googleapis.com/maps/api/place/autocomplete/json?input=$inputText&key=$mapKey&components=country:MY";
+     // String urlAutoCompleteSearch = "https://maps/googleapis.com/maps/api/place/autocomplete/json?input=$inputText&key=$mapKey&components=country:MY";
+      String urlAutoCompleteSearch = "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=" + inputText + "&key=" + mapKey + "&components=country:MY";
+
 
       var responseAutoCompleteSearch = await RequestAssistant.receiveRequest(urlAutoCompleteSearch);
 
