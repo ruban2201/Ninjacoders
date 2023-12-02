@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "821737666638",
+    "project_id": "usgapp1-d46bc",
+    "storage_bucket": "usgapp1-d46bc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821737666638:android:2a369e1422bf1e6a34ab1f",
+        "android_client_info": {
+          "package_name": "com.example.usg_app_user"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1knVgXYxoFN8TYSh66SmjNrn2yrLgdvQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
