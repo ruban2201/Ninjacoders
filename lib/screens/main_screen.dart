@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:usg_app_user/Assistants/assistant_methods.dart';
 import 'package:usg_app_user/global/global.dart';
 import 'package:usg_app_user/global/map_key.dart';
+import 'package:usg_app_user/screens/precise_pickup_location.dart';
 import 'package:usg_app_user/screens/search_places_screen.dart';
 import 'package:usg_app_user/widgets/progress_dialog.dart';
 
@@ -202,27 +203,27 @@ class _MainScreenState extends State<MainScreen> {
 
   }
 
-  getAddressFromLatLng() async {
-    try {
-      GeoData data = await Geocoder2.getDataFromCoordinates(
-          latitude: pickLocation!.latitude,
-          longitude: pickLocation!.longitude,
-          googleMapApiKey: mapKey
-      );
-      setState(() {
-        Directions userPickUpAddress = Directions();
-        userPickUpAddress.locationLatitude = pickLocation!.latitude;
-        userPickUpAddress.locationLongitude = pickLocation!.longitude;
-        userPickUpAddress.locationName = data.address;
-
-        Provider.of<AppInfo>(context, listen: false).updatePickUpLocationAddress(userPickUpAddress);
-
-        //_address = data.address;
-      });
-    } catch (e) {
-      print(e);
-    }
-  }
+  // getAddressFromLatLng() async {
+  //   try {
+  //     GeoData data = await Geocoder2.getDataFromCoordinates(
+  //         latitude: pickLocation!.latitude,
+  //         longitude: pickLocation!.longitude,
+  //         googleMapApiKey: mapKey
+  //     );
+  //     setState(() {
+  //       Directions userPickUpAddress = Directions();
+  //       userPickUpAddress.locationLatitude = pickLocation!.latitude;
+  //       userPickUpAddress.locationLongitude = pickLocation!.longitude;
+  //       userPickUpAddress.locationName = data.address;
+  //
+  //       Provider.of<AppInfo>(context, listen: false).updatePickUpLocationAddress(userPickUpAddress);
+  //
+  //       //_address = data.address;
+  //     });
+  //   } catch (e) {
+  //     print(e);
+  //   }
+  // }
 
   checkIfLocationPermissionAllowed() async {
     _locationPermission = await Geolocator.requestPermission();
@@ -244,7 +245,9 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     bool darkTheme = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
     var provider;
     return GestureDetector(
       onTap: () {
@@ -272,24 +275,24 @@ class _MainScreenState extends State<MainScreen> {
 
                   locateUserPosition();
               },
-              onCameraMove: (CameraPosition? position){
-                  if(pickLocation != position!.target){
-                    setState(() {
-                      pickLocation = position.target;
-                    });
-                  }
-              },
-              onCameraIdle: () {
-                  getAddressFromLatLng();
-              },
+              // onCameraMove: (CameraPosition? position){
+              //     if(pickLocation != position!.target){
+              //       setState(() {
+              //         pickLocation = position.target;
+              //       });
+              //     }
+              // },
+              // onCameraIdle: () {
+              //     getAddressFromLatLng();
+              // },
             ),
-            Align(
-              alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 35.0),
-                child: Image.asset("images/pick.png",height: 45, width: 45,),
-              ),
-            ),
+            // Align(
+            //   alignment: Alignment.center,
+            //   child: Padding(
+            //     padding: const EdgeInsets.only(bottom: 35.0),
+            //     child: Image.asset("images/pick.png",height: 45, width: 45,),
+            //   ),
+            // ),
 
             // ui for searching location
             Positioned(
@@ -396,7 +399,56 @@ class _MainScreenState extends State<MainScreen> {
                                 )
                                 ],
                           ),
+                          ),
+
+                          SizedBox(height: 5,),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                  onPressed: (){
+                                    Navigator.push(context, MaterialPageRoute(builder: (c) => PrecisePickUpScreen()));
+                                  },
+                                  child: Text(
+                                    "Change Pick Up",
+                                    style: TextStyle(
+                                      color: darkTheme ? Colors.black : Colors.white,
+                                    ),
+                                  ),
+                                style: ElevatedButton.styleFrom(
+                                  primary: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                                  textStyle: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  )
+                                ),
+                              ),
+
+                              SizedBox(width: 10,),
+
+                              ElevatedButton(
+                                onPressed: (){
+
+                                },
+                                child: Text(
+                                  "Request A Ride",
+                                  style: TextStyle(
+                                    color: darkTheme ? Colors.black : Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                    primary: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                                    textStyle: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    )
+                                ),
+                              ),
+                            ],
                           )
+
+
                         ],
                       ),
                     )
