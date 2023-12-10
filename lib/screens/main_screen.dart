@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:usg_app_user/Assistants/assistant_methods.dart';
 import 'package:usg_app_user/global/global.dart';
 import 'package:usg_app_user/global/map_key.dart';
+import 'package:usg_app_user/screens/drawer_screen.dart';
 import 'package:usg_app_user/screens/precise_pickup_location.dart';
 import 'package:usg_app_user/screens/search_places_screen.dart';
 import 'package:usg_app_user/widgets/progress_dialog.dart';
@@ -254,6 +255,8 @@ class _MainScreenState extends State<MainScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
+        key: _scaffoldState,
+        drawer: DrawerScreen(),
         body: Stack(
           children: [
             GoogleMap(
@@ -293,6 +296,28 @@ class _MainScreenState extends State<MainScreen> {
             //     child: Image.asset("images/pick.png",height: 45, width: 45,),
             //   ),
             // ),
+
+            //custom hamburger button for drawer
+            Positioned(
+              top: 50,
+              left: 20,
+              child: Container(
+                child: GestureDetector(
+                  onTap: () {
+                    _scaffoldState.currentState!.openDrawer();
+                  },
+
+                  child: CircleAvatar(
+                    backgroundColor: darkTheme ? Colors.amber.shade400 :Colors.white,
+                    child: Icon(
+                      Icons.menu,
+                      color: darkTheme ? Colors.black : Colors.lightBlue,
+                    ),
+
+                  ),
+                ),
+              ),
+            ),
 
             // ui for searching location
             Positioned(
