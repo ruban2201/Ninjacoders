@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "821737666638",
+    "firebase_url": "https://usgapp1-d46bc-default-rtdb.firebaseio.com",
+    "project_id": "usgapp1-d46bc",
+    "storage_bucket": "usgapp1-d46bc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821737666638:android:2a369e1422bf1e6a34ab1f",
+        "android_client_info": {
+          "package_name": "com.example.usg_app_user"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1knVgXYxoFN8TYSh66SmjNrn2yrLgdvQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821737666638:android:4fa421237d5f23e534ab1f",
+        "android_client_info": {
+          "package_name": "com.ninjacoders.usg_app_drivers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1knVgXYxoFN8TYSh66SmjNrn2yrLgdvQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
