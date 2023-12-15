@@ -42,9 +42,3 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-
-# Ignore directories
-$Recycle.Bin/
-Documents and Settings/
-Program Files (x86)/
-Program Files/
