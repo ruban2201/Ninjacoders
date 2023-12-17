@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) =>AppInfo(),
       child: MaterialApp(
-        title: 'USG USER APP',
+        title: 'USG DRIVER APP',
         themeMode: ThemeMode.system,
         theme: MyThemes.lightTheme,
         darkTheme: MyThemes.darkTheme,

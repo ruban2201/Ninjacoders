@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return const Scaffold(
       body: Center(
         child: Text(
-          'USG APP',
+          'USG DRIVERS APP',
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:usg_app_drivers/screens/car_info_screen.dart';
 
 import '../global/global.dart';
 import 'main_screen.dart';
@@ -48,13 +49,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             "phone" : phoneTextEditingController.text.trim(),
           };
 
-          DatabaseReference userRef = FirebaseDatabase.instance.ref().child("users");
+          DatabaseReference userRef = FirebaseDatabase.instance.ref().child("drivers");
           userRef.child(currentUser!.uid).set(userMap);
 
 
         }
         await Fluttertoast.showToast(msg: "Successfully Registered");
-        Navigator.push(context, MaterialPageRoute(builder: (c) => const MainScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (c) => CarInfoScreen()));
       }).catchError((errorMessage) {
         Fluttertoast.showToast(msg: "Error Occured: \n $errorMessage");
       });
@@ -111,15 +112,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 hintStyle: const TextStyle(
                                   color: Colors.grey,
                                 ),
-                                  filled: true,
-                                  fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
-                                  border: OutlineInputBorder(
+                                filled: true,
+                                fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
+                                border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(40),
                                     borderSide: const BorderSide(
                                       width: 0,
                                       style: BorderStyle.none,
                                     )
-                                  ),
+                                ),
                                 prefixIcon: Icon(Icons.person, color: darkTheme ? Colors.amber.shade400 : Colors.grey,),
                               ),
                               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -142,41 +143,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 20,),
 
                             TextFormField(
-                                inputFormatters: [
-                                  LengthLimitingTextInputFormatter(100)
-                                ],
-                                decoration: InputDecoration(
-                                  hintText: "Email",
-                                  hintStyle: const TextStyle(
-                                    color: Colors.grey,
-                                  ),
-                                  filled: true,
-                                  fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(40),
-                                      borderSide: const BorderSide(
-                                        width: 0,
-                                        style: BorderStyle.none,
-                                      )
-                                  ),
-                                  prefixIcon: Icon(Icons.person, color: darkTheme ? Colors.amber.shade400 : Colors.grey,),
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(100)
+                              ],
+                              decoration: InputDecoration(
+                                hintText: "Email",
+                                hintStyle: const TextStyle(
+                                  color: Colors.grey,
                                 ),
-                                autovalidateMode: AutovalidateMode.onUserInteraction,
-                                validator: (text) {
-                                  if(text == null || text.isEmpty){
-                                    return 'Email can\'t be empty';
-                                  }
-                                  if(EmailValidator.validate(text) == true){
-                                    return null;
-                                  }
-                                  if(text.length < 2) {
-                                    return "Please enter a valid email" ;
-                                  }
-                                  if(text.length > 49) {
-                                    return "Email can't be more than 100";
-                                  }
+                                filled: true,
+                                fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(40),
+                                    borderSide: const BorderSide(
+                                      width: 0,
+                                      style: BorderStyle.none,
+                                    )
+                                ),
+                                prefixIcon: Icon(Icons.person, color: darkTheme ? Colors.amber.shade400 : Colors.grey,),
+                              ),
+                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                              validator: (text) {
+                                if(text == null || text.isEmpty){
+                                  return 'Email can\'t be empty';
+                                }
+                                if(EmailValidator.validate(text) == true){
                                   return null;
-                                },
+                                }
+                                if(text.length < 2) {
+                                  return "Please enter a valid email" ;
+                                }
+                                if(text.length > 49) {
+                                  return "Email can't be more than 100";
+                                }
+                                return null;
+                              },
                               onChanged: (text) => setState(() {
                                 emailTextEditingController.text = text;
                               }),
@@ -257,32 +258,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 LengthLimitingTextInputFormatter(50)
                               ],
                               decoration: InputDecoration(
-                                hintText: "Password",
-                                hintStyle: const TextStyle(
-                                  color: Colors.grey,
-                                ),
-                                filled: true,
-                                fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(40),
-                                    borderSide: const BorderSide(
-                                      width: 0,
-                                      style: BorderStyle.none,
-                                    )
-                                ),
-                                prefixIcon: Icon(Icons.person, color: darkTheme ? Colors.amber.shade400 : Colors.grey,),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _passwordVisible ? Icons.visibility : Icons.visibility_off,
-                                    color: darkTheme ? Colors.amber.shade400 : Colors.grey,
+                                  hintText: "Password",
+                                  hintStyle: const TextStyle(
+                                    color: Colors.grey,
                                   ),
-                                     onPressed: () {
-                                     //update the state i.e toggle the state of passwordVisible variable
+                                  filled: true,
+                                  fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(40),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
+                                      )
+                                  ),
+                                  prefixIcon: Icon(Icons.person, color: darkTheme ? Colors.amber.shade400 : Colors.grey,),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                                      color: darkTheme ? Colors.amber.shade400 : Colors.grey,
+                                    ),
+                                    onPressed: () {
+                                      //update the state i.e toggle the state of passwordVisible variable
                                       setState(() {
                                         _passwordVisible = !_passwordVisible;
                                       });
-                                     },
-                                )
+                                    },
+                                  )
                               ),
                               autovalidateMode: AutovalidateMode.onUserInteraction,
                               validator: (text) {
@@ -408,15 +409,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 const SizedBox(width: 5,),
 
                                 GestureDetector(
-                                  onTap: () {
-                                  },
-                                  child: Text(
-                                    "Sign In",
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: darkTheme ? Colors.amber.shade400 : Colors.blue,
-                                    ),
-                                  )
+                                    onTap: () {
+                                    },
+                                    child: Text(
+                                      "Sign In",
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                                      ),
+                                    )
                                 )
                               ],
                             )
@@ -431,7 +432,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
             )
           ],
-    ),
+        ),
       ),
     );
   }

@@ -1,67 +1,46 @@
-import 'package:email_validator/email_validator.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:usg_app_drivers/screens/register_screen.dart';
-
-
+import 'package:usg_app_drivers/splashScreen/splash_screen.dart';
 import '../global/global.dart';
-import '../splashScreen/splash_screen.dart';
-import 'forgot_password_screen.dart';
-import 'main_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class CarInfoScreen extends StatefulWidget {
+  const CarInfoScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<CarInfoScreen> createState() => _CarInfoScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _CarInfoScreenState extends State<CarInfoScreen> {
 
-  final emailTextEditingController = TextEditingController();
-  final passwordTextEditingController = TextEditingController();
+  final carModelTextEditingController = TextEditingController();
+  final carNumberTextEditingController = TextEditingController();
+  final carColorTextEditingController = TextEditingController();
 
-  bool _passwordVisible = false;
+  List<String> carTypes = ["Car", "CNG", "Bike"];
+  String? selectedCarType;
 
-  //declare a GlobalKey
   final _formKey = GlobalKey<FormState>();
 
-  void _submit() async {
-    // validate all the form fields
+  _submit() {
     if(_formKey.currentState!.validate()) {
-      await firebaseAuth.signInWithEmailAndPassword(
-          email: emailTextEditingController.text.trim(),
-          password: passwordTextEditingController.text.trim()
-      ).then((auth) async {
+      Map driverCarInfoMap = {
+        "car_model": carModelTextEditingController.text.trim(),
+        "car_number": carNumberTextEditingController.text.trim(),
+        "car_color": carColorTextEditingController.text.trim(),
 
-        DatabaseReference userRef = FirebaseDatabase.instance.ref().child("drivers");
-        userRef.child(firebaseAuth.currentUser!.uid).once().then((value) async {
-          final snap = value.snapshot;
-          if(snap.value != null) {
-            currentUser = auth.user;
-            await Fluttertoast.showToast(msg: " Successfully Logged In");
-            // ignore: use_build_context_synchronously
-            Navigator.push(context, MaterialPageRoute(builder: (c) => const MainScreen()));
-          }
-          else{
-            await Fluttertoast.showToast(msg: "No records exists with this email");
-            firebaseAuth.signOut();
-            // ignore: use_build_context_synchronously
-            Navigator.push(context, MaterialPageRoute(builder: (c) => const SplashScreen()));
-          }
-        });
+      };
 
-      }).catchError((errorMessage) {
-        Fluttertoast.showToast(msg: "Error Occurred: \n $errorMessage");
-      });
-    }
-    else{
-      Fluttertoast.showToast(msg: "Not all fields are valid");
+      DatabaseReference userRef = FirebaseDatabase.instance.ref().child("drivers");
+      userRef.child(currentUser!.uid).child("car_details").set(driverCarInfoMap);
+
+      Fluttertoast.showToast(msg: "Car details has been saved. Congratulations");
+      Navigator.push(context, MaterialPageRoute(builder: (c) => const SplashScreen())
+      );
+
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        body: ListView (
+        body: ListView(
           padding: const EdgeInsets.all(0),
           children: [
             Column(
@@ -83,11 +62,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20,),
 
                 Text(
-                  'Login',
+                  "Add Car Details",
                   style: TextStyle(
-                    color: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                    color: darkTheme ? Colors.amber.shade400: Colors.blue,
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
+
                   ),
                 ),
 
@@ -104,10 +84,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             TextFormField(
                               inputFormatters: [
-                                LengthLimitingTextInputFormatter(100)
+                                LengthLimitingTextInputFormatter(50)
                               ],
                               decoration: InputDecoration(
-                                hintText: "Email",
+                                hintText: "Car Model",
                                 hintStyle: const TextStyle(
                                   color: Colors.grey,
                                 ),
@@ -125,78 +105,133 @@ class _LoginScreenState extends State<LoginScreen> {
                               autovalidateMode: AutovalidateMode.onUserInteraction,
                               validator: (text) {
                                 if(text == null || text.isEmpty){
-                                  return 'Email can\'t be empty';
-                                }
-                                if(EmailValidator.validate(text) == true){
-                                  return null;
+                                  return 'Name can\'t be empty';
                                 }
                                 if(text.length < 2) {
-                                  return "Please enter a valid email" ;
+                                  return "Please enter a valid name" ;
                                 }
                                 if(text.length > 49) {
-                                  return "Email can't be more than 100";
+                                  return "Name can't be more than 50";
                                 }
                                 return null;
                               },
                               onChanged: (text) => setState(() {
-                                emailTextEditingController.text = text;
+                                carModelTextEditingController.text = text;
                               }),
                             ),
-
                             const SizedBox(height: 20,),
 
                             TextFormField(
-                              obscureText: !_passwordVisible,
                               inputFormatters: [
                                 LengthLimitingTextInputFormatter(50)
                               ],
                               decoration: InputDecoration(
-                                  hintText: "Password",
-                                  hintStyle: const TextStyle(
-                                    color: Colors.grey,
-                                  ),
-                                  filled: true,
-                                  fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(40),
-                                      borderSide: const BorderSide(
-                                        width: 0,
-                                        style: BorderStyle.none,
-                                      )
-                                  ),
-                                  prefixIcon: Icon(Icons.person, color: darkTheme ? Colors.amber.shade400 : Colors.grey,),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _passwordVisible ? Icons.visibility : Icons.visibility_off,
-                                      color: darkTheme ? Colors.amber.shade400 : Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      //update the state i.e toggle the state of passwordVisible variable
-                                      setState(() {
-                                        _passwordVisible = !_passwordVisible;
-                                      });
-                                    },
-                                  )
+                                hintText: "Car Number",
+                                hintStyle: const TextStyle(
+                                  color: Colors.grey,
+                                ),
+                                filled: true,
+                                fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(40),
+                                    borderSide: const BorderSide(
+                                      width: 0,
+                                      style: BorderStyle.none,
+                                    )
+                                ),
+                                prefixIcon: Icon(Icons.person, color: darkTheme ? Colors.amber.shade400 : Colors.grey,),
                               ),
                               autovalidateMode: AutovalidateMode.onUserInteraction,
                               validator: (text) {
                                 if(text == null || text.isEmpty){
-                                  return 'Password can\'t be empty';
+                                  return 'Name can\'t be empty';
                                 }
                                 if(text.length < 2) {
-                                  return "Please enter a valid password" ;
+                                  return "Please enter a valid name" ;
                                 }
                                 if(text.length > 49) {
-                                  return "Password can't be more than 50";
+                                  return "Name can't be more than 50";
                                 }
                                 return null;
                               },
                               onChanged: (text) => setState(() {
-                                passwordTextEditingController.text = text;
+                                carNumberTextEditingController.text = text;
                               }),
                             ),
-
                             const SizedBox(height: 20,),
+
+                            TextFormField(
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(50)
+                              ],
+                              decoration: InputDecoration(
+                                hintText: "Car Color",
+                                hintStyle: const TextStyle(
+                                  color: Colors.grey,
+                                ),
+                                filled: true,
+                                fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(40),
+                                    borderSide: const BorderSide(
+                                      width: 0,
+                                      style: BorderStyle.none,
+                                    )
+                                ),
+                                prefixIcon: Icon(Icons.person, color: darkTheme ? Colors.amber.shade400 : Colors.grey,),
+                              ),
+                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                              validator: (text) {
+                                if(text == null || text.isEmpty){
+                                  return 'Name can\'t be empty';
+                                }
+                                if(text.length < 2) {
+                                  return "Please enter a valid name" ;
+                                }
+                                if(text.length > 49) {
+                                  return "Name can't be more than 50";
+                                }
+                                return null;
+                              },
+                              onChanged: (text) => setState(() {
+                                carColorTextEditingController.text = text;
+                              }),
+                            ),
+                            const SizedBox(height: 20,),
+
+                            DropdownButtonFormField(
+                                decoration: InputDecoration(
+                                    hintText: 'Please Select Your Car Type',
+                                    prefixIcon: Icon(Icons.car_crash, color: darkTheme? Colors.amber.shade400 : Colors.grey),
+                                    filled: true,
+                                    fillColor: darkTheme ? Colors.black45 : Colors.grey.shade200,
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(40),
+                                        borderSide: const BorderSide(
+                                          width: 0,
+                                          style: BorderStyle.none,
+
+                                        )
+                                    )
+                                ),
+                                items: carTypes.map((car){
+                                  return DropdownMenuItem(
+                                    // ignore: sort_child_properties_last
+                                    child: Text(
+                                      car,
+                                      style: const TextStyle(color: Colors.grey),
+                                    ),
+                                    value: car,
+                                  );
+                                }).toList(),
+                                onChanged: (newValue){
+                                  setState(() {
+                                    selectedCarType = newValue.toString();
+                                  });
+                                }
+                            ),
+
+                            const SizedBox(height:20,),
 
                             ElevatedButton(
                                 style: ElevatedButton.styleFrom(
@@ -211,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _submit();
                                 },
                                 child: const Text(
-                                  'Login',
+                                  'Confirm',
                                   style: TextStyle(
                                     fontSize: 20,
                                   ),
@@ -221,9 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 20,),
 
                             GestureDetector(
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (c) => const ForgotPasswordScreen()));
-                              },
+                              onTap: () {},
                               child: Text(
                                 'Forgot Password ?',
                                 style: TextStyle(
@@ -238,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Text(
-                                  "Doesn't have an account ?",
+                                  "Have an account ?",
                                   style: TextStyle(
                                     color: Colors.grey,
                                     fontSize: 15,
@@ -249,10 +282,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 GestureDetector(
                                     onTap: () {
-                                      Navigator.push(context, MaterialPageRoute(builder: (c) => const RegisterScreen()));
                                     },
                                     child: Text(
-                                      "Register",
+                                      "Sign In",
                                       style: TextStyle(
                                         fontSize: 15,
                                         color: darkTheme ? Colors.amber.shade400 : Colors.blue,
@@ -268,7 +300,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                )
+                ),
+
               ],
             )
           ],
