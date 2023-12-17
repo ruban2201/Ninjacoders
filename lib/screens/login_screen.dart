@@ -1,9 +1,11 @@
 import 'package:email_validator/email_validator.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:usg_app_user/screens/forgot_password_screen.dart';
 import 'package:usg_app_user/screens/register_screen.dart';
+import 'package:usg_app_user/splashScreen/splash_screen.dart';
 
 import '../global/global.dart';
 import 'main_screen.dart';
@@ -32,10 +34,24 @@ class _LoginScreenState extends State<LoginScreen> {
           email: emailTextEditingController.text.trim(),
           password: passwordTextEditingController.text.trim()
       ).then((auth) async {
-        currentUser = auth.user;
 
-        await Fluttertoast.showToast(msg: "Successfully Logged In");
-        Navigator.push(context, MaterialPageRoute(builder: (c) => const MainScreen()));
+        DatabaseReference userRef = FirebaseDatabase.instance.ref().child("users");
+        userRef.child(firebaseAuth.currentUser!.uid).once().then((value) async {
+          final snap = value.snapshot;
+          if(snap.value != null) {
+            currentUser = auth.user;
+            await Fluttertoast.showToast(msg: " Successfully Logged In");
+            // ignore: use_build_context_synchronously
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const MainScreen()));
+          }
+          else{
+            await Fluttertoast.showToast(msg: "No records exists with this email");
+            firebaseAuth.signOut();
+            // ignore: use_build_context_synchronously
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const SplashScreen()));
+          }
+        });
+
       }).catchError((errorMessage) {
         Fluttertoast.showToast(msg: "Error Occured: \n $errorMessage");
       });
