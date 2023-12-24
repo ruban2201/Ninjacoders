@@ -44,7 +44,7 @@ dependencies:
   firebase_storage: ^11.0.10
   firebase_messaging: ^14.2.6
   fluttertoast: ^8.2.2
-  google_maps_flutter: ^2.5.0
+  google_maps_flutter: ^2.4.1
   geolocator: ^10.1.0
   geocoder2: ^1.4.0
   flutter_geofire: ^2.0.3
@@ -64,7 +64,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

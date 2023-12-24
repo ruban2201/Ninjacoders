@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui';
 
 import'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geocoder2/geocoder2.dart';
 import 'package:geolocator/geolocator.dart';
@@ -8,8 +12,12 @@ import 'package:location/location.dart' as loc;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:usg_app_user/Assistants/assistant_methods.dart';
+import 'package:usg_app_user/Assistants/geofire_assistant.dart';
 import 'package:usg_app_user/global/global.dart';
 import 'package:usg_app_user/global/map_key.dart';
+import 'package:usg_app_user/models/active_nearby_available_drivers.dart';
+import 'package:usg_app_user/screens/drawer_screen.dart';
+import 'package:usg_app_user/screens/precise_pickup_location.dart';
 import 'package:usg_app_user/screens/search_places_screen.dart';
 import 'package:usg_app_user/widgets/progress_dialog.dart';
 
@@ -82,11 +90,102 @@ class _MainScreenState extends State<MainScreen> {
     userName =  userModelCurrentInfo!.name!;
     userEmail = userModelCurrentInfo!.email!;
 
-    //initializeGeoFireListener();
+    initializeGeoFireListener();
     //
     //AssistantMethods.readTipsKeysForOnlineUser(context);
 
   }
+  initializeGeoFireListener() {
+    Geofire.initialize("activeDrivers");
+
+    Geofire.queryAtLocation(userCurrentPosition!.latitude, userCurrentPosition!.longitude, 10)!
+      .listen((map) {
+        print(map);
+
+        if(map != null) {
+          var callBack = map["callBack"];
+
+          switch(callBack) {
+            //whenever any driver becomes active/online
+            case Geofire.onKeyEntered:
+              ActiveNearByAvailableDrivers activeNearByAvailableDrivers = ActiveNearByAvailableDrivers();
+              activeNearByAvailableDrivers.locationLatitude = map["latitude"];
+              activeNearByAvailableDrivers.locationLongitude = map["longitude"];
+              activeNearByAvailableDrivers.driverId = map["key"];
+              GeoFireAssistant.activeNearByAvailableDriverList.add(activeNearByAvailableDrivers);
+              if(activeNearbyDriverKeysLoaded == true) {
+                displayActiveDriversOnUsersMap();
+              }
+              break;
+
+            //whenever any driver become non-active/online
+            case Geofire.onKeyExited:
+              GeoFireAssistant.deleteOfflineDriverFromList(map["key"]);
+              displayActiveDriversOnUsersMap();
+              break;
+
+            //whenever driver moves - update driver location
+            case Geofire.onKeyMoved:
+              ActiveNearByAvailableDrivers activeNearByAvailableDrivers = ActiveNearByAvailableDrivers();
+              activeNearByAvailableDrivers.locationLatitude = map["latitude"];
+              activeNearByAvailableDrivers.locationLongitude = map["longitude"];
+              activeNearByAvailableDrivers.driverId = map["key"];
+              GeoFireAssistant.updateActiveNearByAvailableDriverLocation(activeNearByAvailableDrivers);
+              displayActiveDriversOnUsersMap();
+              break;
+
+            //Display Those Online Active Drivers On User's Map
+            case Geofire.onGeoQueryReady:
+              activeNearbyDriverKeysLoaded = true;
+              displayActiveDriversOnUsersMap();
+              break;
+          }
+        }
+        setState(() {
+
+        });
+    });
+  }
+
+  displayActiveDriversOnUsersMap() {
+    setState(() {
+      markersSet.clear();
+      circlesSet.clear();
+
+      Set<Marker> driversMarkerSet = Set<Marker>();
+
+      for(ActiveNearByAvailableDrivers eachDriver in GeoFireAssistant.activeNearByAvailableDriverList){
+        LatLng eachDriverActivePosition = LatLng(eachDriver.locationLatitude!, eachDriver.locationLongitude!);
+
+        Marker marker = Marker(
+          markerId: MarkerId(eachDriver.driverId!),
+          position: eachDriverActivePosition,
+          icon: activeNearbyIcon!,
+          rotation: 360,
+        );
+        driversMarkerSet.add(marker);
+      }
+
+      setState(() {
+        markersSet = driversMarkerSet;
+      });
+
+    });
+  }
+
+  createActiveNearByDriverIconMarker() async {
+    if (activeNearbyIcon == null) {
+      ByteData byteData = await rootBundle.load('images/car2.png');
+      Uint8List byteList = byteData.buffer.asUint8List();
+
+      // Create a BitmapDescriptor from the loaded image
+      activeNearbyIcon = BitmapDescriptor.fromBytes(byteList);
+    }
+  }
+
+
+
+
 
   Future<void> drawPolyLineFromOriginToDestination(bool darkTheme) async {
     var originPosition = Provider.of<AppInfo>(context, listen: false).userPickUpLocation;
@@ -202,27 +301,27 @@ class _MainScreenState extends State<MainScreen> {
 
   }
 
-  getAddressFromLatLng() async {
-    try {
-      GeoData data = await Geocoder2.getDataFromCoordinates(
-          latitude: pickLocation!.latitude,
-          longitude: pickLocation!.longitude,
-          googleMapApiKey: mapKey
-      );
-      setState(() {
-        Directions userPickUpAddress = Directions();
-        userPickUpAddress.locationLatitude = pickLocation!.latitude;
-        userPickUpAddress.locationLongitude = pickLocation!.longitude;
-        userPickUpAddress.locationName = data.address;
-
-        Provider.of<AppInfo>(context, listen: false).updatePickUpLocationAddress(userPickUpAddress);
-
-        //_address = data.address;
-      });
-    } catch (e) {
-      print(e);
-    }
-  }
+  // getAddressFromLatLng() async {
+  //   try {
+  //     GeoData data = await Geocoder2.getDataFromCoordinates(
+  //         latitude: pickLocation!.latitude,
+  //         longitude: pickLocation!.longitude,
+  //         googleMapApiKey: mapKey
+  //     );
+  //     setState(() {
+  //       Directions userPickUpAddress = Directions();
+  //       userPickUpAddress.locationLatitude = pickLocation!.latitude;
+  //       userPickUpAddress.locationLongitude = pickLocation!.longitude;
+  //       userPickUpAddress.locationName = data.address;
+  //
+  //       Provider.of<AppInfo>(context, listen: false).updatePickUpLocationAddress(userPickUpAddress);
+  //
+  //       //_address = data.address;
+  //     });
+  //   } catch (e) {
+  //     print(e);
+  //   }
+  // }
 
   checkIfLocationPermissionAllowed() async {
     _locationPermission = await Geolocator.requestPermission();
@@ -244,13 +343,19 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    createActiveNearByDriverIconMarker();
     bool darkTheme = MediaQuery.of(context).platformBrightness == Brightness.dark;
-    var provider;
+
+
+    //var provider;
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
+        key: _scaffoldState,
+        drawer: DrawerScreen(),
         body: Stack(
           children: [
             GoogleMap(
@@ -272,22 +377,44 @@ class _MainScreenState extends State<MainScreen> {
 
                   locateUserPosition();
               },
-              onCameraMove: (CameraPosition? position){
-                  if(pickLocation != position!.target){
-                    setState(() {
-                      pickLocation = position.target;
-                    });
-                  }
-              },
-              onCameraIdle: () {
-                  getAddressFromLatLng();
-              },
+              // onCameraMove: (CameraPosition? position){
+              //     if(pickLocation != position!.target){
+              //       setState(() {
+              //         pickLocation = position.target;
+              //       });
+              //     }
+              // },
+              // onCameraIdle: () {
+              //     getAddressFromLatLng();
+              // },
             ),
-            Align(
-              alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 35.0),
-                child: Image.asset("images/pick.png",height: 45, width: 45,),
+            // Align(
+            //   alignment: Alignment.center,
+            //   child: Padding(
+            //     padding: const EdgeInsets.only(bottom: 35.0),
+            //     child: Image.asset("images/pick.png",height: 45, width: 45,),
+            //   ),
+            // ),
+
+            //custom hamburger button for drawer
+            Positioned(
+              top: 50,
+              left: 20,
+              child: Container(
+                child: GestureDetector(
+                  onTap: () {
+                    _scaffoldState.currentState!.openDrawer();
+                  },
+
+                  child: CircleAvatar(
+                    backgroundColor: darkTheme ? Colors.amber.shade400 :Colors.white,
+                    child: Icon(
+                      Icons.menu,
+                      color: darkTheme ? Colors.black : Colors.lightBlue,
+                    ),
+
+                  ),
+                ),
               ),
             ),
 
@@ -396,7 +523,56 @@ class _MainScreenState extends State<MainScreen> {
                                 )
                                 ],
                           ),
+                          ),
+
+                          SizedBox(height: 5,),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                  onPressed: (){
+                                    Navigator.push(context, MaterialPageRoute(builder: (c) => PrecisePickUpScreen()));
+                                  },
+                                  child: Text(
+                                    "Change Pick Up",
+                                    style: TextStyle(
+                                      color: darkTheme ? Colors.black : Colors.white,
+                                    ),
+                                  ),
+                                style: ElevatedButton.styleFrom(
+                                  primary: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                                  textStyle: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  )
+                                ),
+                              ),
+
+                              SizedBox(width: 10,),
+
+                              ElevatedButton(
+                                onPressed: (){
+
+                                },
+                                child: Text(
+                                  "Request A Ride",
+                                  style: TextStyle(
+                                    color: darkTheme ? Colors.black : Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                    primary: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                                    textStyle: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    )
+                                ),
+                              ),
+                            ],
                           )
+
+
                         ],
                       ),
                     )
