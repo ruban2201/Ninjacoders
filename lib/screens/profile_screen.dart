@@ -142,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextButton(
                 onPressed: () {
                   userRef.child(firebaseAuth.currentUser!.uid).update({
-                    "Address": addressTextEditingController.text.trim(),
+                    "address": addressTextEditingController.text.trim(),
                   }).then((value) {
                     addressTextEditingController.clear();
                     Fluttertoast.showToast(

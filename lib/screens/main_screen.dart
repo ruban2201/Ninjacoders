@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoder2/geocoder2.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:location/location.dart' as loc;
@@ -19,6 +23,7 @@ import 'package:usg_app_user/models/active_nearby_available_drivers.dart';
 import 'package:usg_app_user/screens/drawer_screen.dart';
 import 'package:usg_app_user/screens/precise_pickup_location.dart';
 import 'package:usg_app_user/screens/search_places_screen.dart';
+import 'package:usg_app_user/splashScreen/splash_screen.dart';
 import 'package:usg_app_user/widgets/progress_dialog.dart';
 
 import '../infoHandler/app_info.dart';
@@ -51,6 +56,8 @@ class _MainScreenState extends State<MainScreen> {
   double searchLocationContainerHeight = 220;
   double waitingResponsefromDriverContainerHeight = 0;
   double assignedDriverInfoContainerHeight = 0;
+  double suggestedRidesCointainerHeight = 0;
+  double searchingForDriverContainerHeight = 0;
 
   Position? userCurrentPosition;
   var geoLocation = Geolocator();
@@ -58,7 +65,7 @@ class _MainScreenState extends State<MainScreen> {
   LocationPermission? _locationPermission;
   double bottomPaddingOfMap = 0;
 
-  List<LatLng> pLineCoordinatedList = [];
+  List<LatLng> pLineCoordinatesList = [];
   Set<Polyline> polylineSet = {};
 
   Set<Marker> markersSet = {};
@@ -71,7 +78,19 @@ class _MainScreenState extends State<MainScreen> {
 
   bool activeNearbyDriverKeysLoaded = false;
 
+  DatabaseReference? referenceRideRequest;
+
   BitmapDescriptor? activeNearbyIcon;
+
+  String selectedVehicleType = "";
+
+  String driverRideStatus = "Driver is coming";
+  StreamSubscription<DatabaseEvent>? tripRideRequestInfoStreamSubscription;
+
+  List<ActiveNearByAvailableDrivers> onlineNearByAvailableDriversList = [];
+
+  String userRideRequestStatus = "";
+  bool requestPositionInfo = true;
 
  // get darkTheme => null;
 
@@ -175,7 +194,7 @@ class _MainScreenState extends State<MainScreen> {
 
   createActiveNearByDriverIconMarker() async {
     if (activeNearbyIcon == null) {
-      ByteData byteData = await rootBundle.load('images/car2.png');
+      ByteData byteData = await rootBundle.load('images/car3.png');
       Uint8List byteList = byteData.buffer.asUint8List();
 
       // Create a BitmapDescriptor from the loaded image
@@ -209,11 +228,11 @@ class _MainScreenState extends State<MainScreen> {
     PolylinePoints pPoints = PolylinePoints();
     List<PointLatLng> decodePolyLinePointsResultList = pPoints.decodePolyline(directionDetailsInfo.e_points!);
     
-    pLineCoordinatedList.clear();
+    pLineCoordinatesList.clear();
     
     if(decodePolyLinePointsResultList.isNotEmpty) {
       decodePolyLinePointsResultList.forEach((PointLatLng pointLatLng) {
-        pLineCoordinatedList.add(LatLng(pointLatLng.latitude, pointLatLng.longitude));
+        pLineCoordinatesList.add(LatLng(pointLatLng.latitude, pointLatLng.longitude));
     });
     }
 
@@ -224,7 +243,7 @@ class _MainScreenState extends State<MainScreen> {
         color: darkTheme ? Colors.amberAccent : Colors.blue,
         polylineId: PolylineId("PolyLineID"),
         jointType: JointType.round,
-        points: pLineCoordinatedList,
+        points: pLineCoordinatesList,
         startCap: Cap.roundCap,
         endCap: Cap.roundCap,
         geodesic: true,
@@ -298,7 +317,20 @@ class _MainScreenState extends State<MainScreen> {
       circlesSet.add(destinationCircle);
     });
 
+  }
 
+  void showSearchingForDriversContainer() {
+    setState(() {
+      searchingForDriverContainerHeight = 200;
+    });
+  }
+
+  void showSuggestedRidesContainer(){
+    setState(() {
+      suggestedRidesCointainerHeight = 400;
+      bottomPaddingOfMap = 400;
+
+    });
   }
 
   // getAddressFromLatLng() async {
@@ -329,6 +361,237 @@ class _MainScreenState extends State<MainScreen> {
     if(
     _locationPermission == LocationPermission.denied) {
       _locationPermission = await Geolocator.requestPermission();
+    }
+  }
+
+  saveRideRequestInformation(String selectedVehicleType){
+    //1. save the rideRequest Information
+     referenceRideRequest = FirebaseDatabase.instance.ref().child("All Ride Request").push();
+
+     var originLocation = Provider.of<AppInfo>(context, listen: false).userPickUpLocation;
+     var destinationLocation = Provider.of<AppInfo>(context, listen: false).userDropOffLocation;
+
+     Map originLocationMap = {
+       //"key : value"
+       "latitude": originLocation!.locationLatitude.toString(),
+       "longitude": originLocation.locationLongitude.toString(),
+     };
+
+
+     Map destinationLocationMap = {
+       //"key : value"
+       "latitude": destinationLocation!.locationLatitude.toString(),
+       "longitude": destinationLocation.locationLongitude.toString(),
+     };
+
+     Map userInformationMap = {
+       "origin": originLocationMap,
+       "destination": destinationLocationMap,
+       "time": DateTime.now().toString(),
+       "userName": userModelCurrentInfo!.name,
+       "userPhone": userModelCurrentInfo!.phone,
+       "originAddress": originLocation.locationName,
+       "destinationAddress": destinationLocation.locationName,
+       "driverId": "waiting",
+     };
+
+     referenceRideRequest!.set(userInformationMap);
+
+     tripRideRequestInfoStreamSubscription = referenceRideRequest!.onValue.listen((eventSnap) async  {
+       if(eventSnap.snapshot.value == null) {
+         return;
+       }
+
+       if ((eventSnap.snapshot.value as Map)["car_details"] != null){
+         setState(() {
+           driverCarDetails = (eventSnap.snapshot.value as Map)["car_details"].toString();
+         });
+       }
+
+       if ((eventSnap.snapshot.value as Map)["driverPhone"] != null){
+         setState(() {
+           driverCarDetails = (eventSnap.snapshot.value as Map)["driverPhone"].toString();
+         });
+       }
+
+       if ((eventSnap.snapshot.value as Map)["driverName"] != null){
+         setState(() {
+           driverCarDetails = (eventSnap.snapshot.value as Map)["driverName"].toString();
+         });
+       }
+
+       if ((eventSnap.snapshot.value as Map)["status"] != null){
+         setState(() {
+           userRideRequestStatus = (eventSnap.snapshot.value as Map)["status"].toString();
+         });
+       }
+
+       if((eventSnap.snapshot.value as Map)["driverLocation"]!= null){
+         double driverCurrentPositionLat = double.parse((eventSnap.snapshot.value as Map)["driverLocation"]["latitude"].toString());
+         double driverCurrentPositionLng = double.parse((eventSnap.snapshot.value as Map)["driverLocation"]["longitude"].toString());
+
+         LatLng driverCurrentPositionLatLng = LatLng(driverCurrentPositionLat, driverCurrentPositionLng);
+
+         //status = accepted
+         if(userRideRequestStatus == "accepted"){
+           updateArrivalTimeToUserPickUpLocation(driverCurrentPositionLng);
+         }
+         //status = arrived
+         if(userRideRequestStatus == "arrived"){
+           setState(() {
+             driverRideStatus = "Driver has arrived";
+           });
+         }
+
+         //status = onTrip
+         if(userRideRequestStatus == "onTrip"){
+           updateRechingTimeToUserDropOffLocation(driverCurrentPositionLatLng);
+         }
+         
+         if(userRideRequestStatus == "ended"){
+           if((eventSnap.snapshot.value as Map)["fareAmount"] !=null){
+             double fareAmount = double.parse((eventSnap.snapshot.value as Map)["fareAmount"].toString());
+             
+             var response = await showDialog(
+               context: context,
+               builder: (BuildContext context) => PayFareAmountDialog(
+                // fareAmount: fareAmount,
+               )
+            );
+             
+             if(response == 'Cash Paid') {
+               //user can rate the driver noe
+               if((eventSnap.snapshot.value as Map)["driverId"] != null){
+                 String assignedDriverId = (eventSnap.snapshot.value as Map)["driverId"].toString();
+                // Navigator.push(context, MaterialPageRoute(builder: (c) => RateDriverScreen()));
+
+                 referenceRideRequest!.onDisconnect();
+                 tripRideRequestInfoStreamSubscription!.cancel();
+               }
+             }
+           }
+         }
+       }
+     });
+
+     onlineNearByAvailableDriversList = GeoFireAssistant.activeNearByAvailableDriverList;
+     searchNearestOnlineDrivers(selectedVehicleType);
+  }
+
+  searchNearestOnlineDrivers(String selectedVehicleType) async {
+    if(onlineNearByAvailableDriversList.length == 0) {
+      //cancel/delete the rideRequest Information
+      referenceRideRequest!.remove();
+
+      setState(() {
+        polylineSet.clear();
+        markersSet.clear();
+        circlesSet.clear();
+        pLineCoordinatesList.clear();
+      });
+
+      Fluttertoast.showToast(msg: "No online nearest Driver Available");
+      Fluttertoast.showToast(msg: "Search Again. \n Restarting App");
+
+      Future.delayed(Duration(milliseconds: 4000), () {
+        referenceRideRequest!.remove();
+        Navigator.push(context, MaterialPageRoute(builder: (c) => SplashScreen()));
+      });
+      return;
+    }
+
+    await retrieveOnlineDriversInformation(onlineNearByAvailableDriversList);
+
+    print("Driver List: " + driversList.toString());
+
+    for(int i = 0; i < driversList.length; i++){
+      if(driversList[i]["car_details"]["type"] == selectedVehicleType){
+        //AssistantMethods.sendNotificationToDriverNow(driversList[i]["token"], referenceRideRequest!.key!, context);
+      }
+    }
+
+    Fluttertoast.showToast(msg: "Notification sent Successfully");
+
+    showSearchingForDriversContainer();
+
+    await FirebaseDatabase.instance.ref().child("All Ride Requests").child(referenceRideRequest!.key!).child("driverId").onValue.listen((eventRideRequestSnapshot) {
+    print("EventSnapshot: ${eventRideRequestSnapshot.snapshot.value}");
+      if(eventRideRequestSnapshot.snapshot.value != null){
+        if(eventRideRequestSnapshot.snapshot.value != "waiting"){
+          showUIForAssignedDriverInfo();
+        }
+      }
+    });
+  }
+
+  updateArrivalTimeToUserPickUpLocation(driverCurrentPositionLng) async {
+    if(requestPositionInfo == true) {
+      requestPositionInfo = false;
+      LatLng userPickUpPosition = LatLng(userCurrentPosition!.latitude, userCurrentPosition!.longitude);
+
+      var directionDetailsInfo = await AssistantMethods.obtainOriginToDestinationDirectionDetails(
+          driverCurrentPositionLng, userPickUpPosition,
+      );
+
+      if(directionDetailsInfo == null){
+        return;
+      }
+      setState(() {
+        driverRideStatus = "Driver is coming: " + directionDetailsInfo.distance_text.toString();
+      });
+
+      requestPositionInfo = true;
+    }
+  }
+
+  updateRechingTimeToUserDropOffLocation(driverCurrentPositionLatLng) async {
+    if(requestPositionInfo == true){
+      requestPositionInfo = false;
+
+      var dropOffLocation = Provider.of<AppInfo>(context, listen: false).userDropOffLocation;
+
+      LatLng userDestinationPosition = LatLng(
+          dropOffLocation!.locationLatitude!,
+          dropOffLocation.locationLongitude!,
+      );
+
+      var directionDetailsInfo = await AssistantMethods.obtainOriginToDestinationDirectionDetails(
+          driverCurrentPositionLatLng,
+          userDestinationPosition
+      );
+
+      if(directionDetailsInfo == null){
+        return;
+      }
+      setState(() {
+        driverRideStatus = "Going Towards Destination: " + directionDetailsInfo.duration_text.toString();
+      });
+
+      requestPositionInfo = true;
+    }
+  }
+
+  showUIForAssignedDriverInfo() {
+    setState(() {
+      waitingResponsefromDriverContainerHeight = 0;
+      searchLocationContainerHeight = 0;
+      assignedDriverInfoContainerHeight = 200;
+      suggestedRidesCointainerHeight = 0;
+      bottomPaddingOfMap = 200;
+    });
+  }
+
+  retrieveOnlineDriversInformation(List onlineNearestDriversList) async {
+    driversList.clear();
+    DatabaseReference ref = FirebaseDatabase.instance.ref().child("drivers");
+
+    for(int i = 0; i < onlineNearestDriversList.length; i++) {
+      await ref.child(onlineNearestDriversList[i].driverId.toString()).once().then((dataSnapshot) {
+        var driverKeyInfo = dataSnapshot.snapshot.value;
+
+        driversList.add(driverKeyInfo);
+        print("driver key information = " + driversList.toString());
+      });
     }
   }
 
@@ -424,7 +687,7 @@ class _MainScreenState extends State<MainScreen> {
               left: 0,
               right: 0,
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 50, 20, 20),
+                padding: EdgeInsets.fromLTRB(10, 50, 10, 10),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -535,7 +798,7 @@ class _MainScreenState extends State<MainScreen> {
                                     Navigator.push(context, MaterialPageRoute(builder: (c) => PrecisePickUpScreen()));
                                   },
                                   child: Text(
-                                    "Change Pick Up",
+                                    "Change Pick Up Address",
                                     style: TextStyle(
                                       color: darkTheme ? Colors.black : Colors.white,
                                     ),
@@ -553,10 +816,15 @@ class _MainScreenState extends State<MainScreen> {
 
                               ElevatedButton(
                                 onPressed: (){
-
+                                  if (Provider.of<AppInfo>(context,listen: false).userDropOffLocation !=null) {
+                                    showSuggestedRidesContainer();
+                                  }
+                                  else{
+                                    Fluttertoast.showToast(msg: "Please selsect destination location");
+                                  }
                                 },
                                 child: Text(
-                                  "Request A Ride",
+                                  "Show Fare",
                                   style: TextStyle(
                                     color: darkTheme ? Colors.black : Colors.white,
                                   ),
@@ -580,6 +848,271 @@ class _MainScreenState extends State<MainScreen> {
                 ),
             ),
             ),
+
+            // ui for suggested rides
+            Positioned(
+              left: 0,
+              right:0,
+              bottom: 0,
+              child: Container(
+                height: suggestedRidesCointainerHeight,
+                decoration: BoxDecoration(
+                  color: darkTheme ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(20),
+                    topLeft: Radius.circular(20),
+                  )
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding:EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                            child: Icon(
+                              Icons.star,
+                              color: Colors.white,
+                            ),
+                          ),
+
+                          SizedBox(width: 15,),
+
+                          Text(
+                            Provider.of<AppInfo>(context).userPickUpLocation != null
+                              ? (Provider.of<AppInfo>(context).userPickUpLocation!.locationName!).substring(0, 24) + "...."
+                              : "Not Getting Address",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+
+                      SizedBox(height: 20,),
+
+                    Row (
+                      children: [
+                        Container(
+                          padding:EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: Icon(
+                            Icons.star,
+                            color: Colors.white,
+                          ),
+                        ),
+
+                        SizedBox(width: 15,),
+
+                        Text(
+                          Provider.of<AppInfo>(context).userDropOffLocation != null
+                              ? Provider.of<AppInfo>(context).userDropOffLocation!.locationName!
+                              : "Where to?",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        )
+                      ],
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    Text("SUGGESTED RIDES",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: (){
+                            setState(() {
+                              selectedVehicleType = "Car";
+                            });
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: selectedVehicleType == "Car" ? (darkTheme ? Colors.black : Colors.white): (darkTheme ? Colors.white : Colors.black),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(25.0),
+                              child: Column(
+                                children: [
+                                  Image.asset("image/car2.png",scale:2,),
+
+                                  SizedBox(height: 8,),
+
+                                  Text(
+                                    "Car",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 2,),
+
+                                  Text(
+                                      tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *2)*107).toStringAsFixed(1)}"
+                                      :"null",
+                                   style: TextStyle(
+                                     color: Colors.grey,
+                                   )
+                                  )
+
+                                ],
+                              )
+                            )
+                          ),
+                        ),
+
+                        GestureDetector(
+                          onTap: (){
+                            setState(() {
+                              selectedVehicleType = "CNG";
+                            });
+                          },
+                          child: Container(
+                              decoration: BoxDecoration(
+                                color: selectedVehicleType == "CNG" ? (darkTheme ? Colors.black : Colors.white): (darkTheme ? Colors.white : Colors.black),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                  padding: EdgeInsets.all(25.0),
+                                  child: Column(
+                                    children: [
+                                      Image.asset("image/car2.png",scale:2,),
+
+                                      SizedBox(height: 8,),
+
+                                      Text(
+                                        "Car",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+
+                                      SizedBox(height: 2,),
+
+                                      Text(
+                                          tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *1.5)*107).toStringAsFixed(1)}"
+                                              :"null",
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                          )
+                                      )
+
+                                    ],
+                                  )
+                              )
+                          ),
+                        ),
+
+                        GestureDetector(
+                          onTap: (){
+                            setState(() {
+                              selectedVehicleType = "Bike";
+                            });
+                          },
+                          child: Container(
+                              decoration: BoxDecoration(
+                                color: selectedVehicleType == "Bike" ? (darkTheme ? Colors.black : Colors.white): (darkTheme ? Colors.white : Colors.black),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                  padding: EdgeInsets.all(25.0),
+                                  child: Column(
+                                    children: [
+                                      Image.asset("image/car2.png",scale:2,),
+
+                                      SizedBox(height: 8,),
+
+                                      Text(
+                                        "Car",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+
+                                      SizedBox(height: 2,),
+
+                                      Text(
+                                          tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *0.8)*107).toStringAsFixed(1)}"
+                                              :"null",
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                          )
+                                      )
+
+                                    ],
+                                  )
+                              )
+                          ),
+                        ),
+
+                      ],
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (selectedVehicleType != ""){
+                            saveRideRequestInformation(selectedVehicleType);
+                          }
+                          else{
+                            Fluttertoast.showToast(msg: "Please select a vechile from \n suggested rides.");
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                            borderRadius: BorderRadius.circular(10)
+                          ),
+                          child: Center(
+                            child: Text(
+                              "Request a Ride",
+                              style: TextStyle(
+                                color: darkTheme ? Colors.black : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+
+
+
+                  ],
+                  ),
+                ),
+              ),
+
+            )
 
             // Positioned(
            // top: 40,
