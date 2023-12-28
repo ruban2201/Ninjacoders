@@ -9,6 +9,7 @@ User? currentUser;
 
 UserModel? userModelCurrentInfo;
 
+String cloudMessagingServerToken = "key=AAAAv1NhuE4:APA91bHj7-VlInvglYtHJEKrOtk_wsplf0RsqzpFcmM8FDimFR6DqS9DJnGZMHoYvcfldnl9F3Sgfx8R5LeRNhd-OH3cJTKLLx3H8QlCOEvshck8QaUGmx11rP__sV5vQ-xKD7IMMs8T";
 List driversList = [];
 DirectionDetailsInfo? tripDirectionDetailsInfo;
 String userDropOffAddress = "";
