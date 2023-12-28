@@ -1,6 +1,5 @@
 
 import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:usg_app_drivers/models/driver_data.dart';
@@ -14,6 +13,7 @@ User? currentUser;
 StreamSubscription<Position>? streamSubscriptionPosition;
 StreamSubscription<Position>? streamSubscriptionDriverLivePosition;
 
+AssetsAudioPlayer audioPlayer = AssetsAudioPlayer();
 
 UserModel? userModelCurrentInfo;
 
