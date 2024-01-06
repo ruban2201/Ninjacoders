@@ -7,6 +7,8 @@ import 'package:usg_app_drivers/Assistants/assistant_methods.dart';
 import 'package:usg_app_drivers/global/global.dart';
 import 'package:usg_app_drivers/models/user_ride_request_information.dart';
 
+import '../screens/new_trip_screen.dart';
+
 class NotificationDialogBox extends StatefulWidget {
 
   UserRideRequestInformation? userRideRequestDetails;
@@ -191,7 +193,9 @@ class _NotificationDialogBoxState extends State<NotificationDialogBox>{
           AssistantMethods.pauseLiveLocationUpdates();
 
           //trip started now - sending driver to new tripScreen
-          //Navigator.push(context, MaterialPageRoute(builder: (c) => NewTripScreen()));
+          Navigator.push(context, MaterialPageRoute(builder: (c) => NewTripScreen(
+            userRideRequestDetails: widget.userRideRequestDetails,
+          )));
         }
         else {
           Fluttertoast.showToast(msg: "This Ride Request do not exists");
