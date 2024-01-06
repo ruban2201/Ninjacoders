@@ -1,5 +1,8 @@
 
+import 'dart:async';
+
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -70,5 +73,10 @@ class AssistantMethods {
 
     return directionDetailsInfo;
 
+  }
+
+  static pauseLiveLocationUpdates() {
+    streamSubscriptionPosition!.pause();
+    Geofire.removeLocation(firebaseAuth.currentUser!.uid);
   }
 }

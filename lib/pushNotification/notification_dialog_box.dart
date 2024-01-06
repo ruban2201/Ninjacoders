@@ -1,6 +1,11 @@
+import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:usg_app_drivers/Assistants/assistant_methods.dart';
 import 'package:usg_app_drivers/global/global.dart';
-import 'package:usg_app_drivers/global/user_ride_request_information.dart';
+import 'package:usg_app_drivers/models/user_ride_request_information.dart';
 
 class NotificationDialogBox extends StatefulWidget {
 
@@ -169,5 +174,28 @@ class _NotificationDialogBoxState extends State<NotificationDialogBox>{
             ),
         ),
     );
+  }
+
+  acceptRideRequest(BuildContext context){
+
+    FirebaseDatabase.instance.ref()
+        .child("drivers")
+        .child(firebaseAuth.currentUser!.uid)
+        .child("newRideStatus")
+        .once()
+        .then((snap)
+    {
+        if(snap.snapshot.value == "idle") {
+          FirebaseDatabase.instance.ref().child("drivers").child(firebaseAuth.currentUser!.uid).child("newRideStatus").set("accepted");
+
+          AssistantMethods.pauseLiveLocationUpdates();
+
+          //trip started now - sending driver to new tripScreen
+          //Navigator.push(context, MaterialPageRoute(builder: (c) => NewTripScreen()));
+        }
+        else {
+          Fluttertoast.showToast(msg: "This Ride Request do not exists");
+        }
+    });
   }
 }

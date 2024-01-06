@@ -7,6 +7,7 @@ import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:usg_app_drivers/pushNotification/push_notification_system.dart';
 
 import '../Assistants/assistant_methods.dart';
 import '../global/global.dart';
@@ -90,6 +91,10 @@ class _HomeTabPageState extends State<HomeTabPage> {
 
     checkIfLocationPermissionAllowed();
     readCurrentDriverInformation();
+
+    PushNotificationSystem pushNotificationSystem = PushNotificationSystem();
+    pushNotificationSystem.initializeCloudMessaging(context);
+    pushNotificationSystem.generateAndGetToken();
   }
 
   @override

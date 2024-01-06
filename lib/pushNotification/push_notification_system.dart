@@ -1,7 +1,6 @@
 
 
-import 'dart:html';
-
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -10,7 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:usg_app_drivers/global/global.dart';
-import 'package:usg_app_drivers/global/user_ride_request_information.dart';
+import 'package:usg_app_drivers/models/user_ride_request_information.dart';
+import 'package:usg_app_drivers/pushNotification/notification_dialog_box.dart';
 
 class PushNotificationSystem{
   FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -38,12 +38,12 @@ class PushNotificationSystem{
   }
 
     readUserRideRequestInformation(String userRideRequestId, BuildContext context) {
-    FirebaseDatabase.instance.ref().child("ALL Ride Request").child(userRideRequestId).child("driverId").onValue.listen((event) {
+    FirebaseDatabase.instance.ref().child("All Ride Request").child(userRideRequestId).child("driverId").onValue.listen((event) {
       if(event.snapshot.value == "waiting" || event.snapshot.value == firebaseAuth.currentUser!.uid){
-        FirebaseDatabase.instance.ref().child("ALL Ride Request").child(userRideRequestId).once().then((snapData){
+        FirebaseDatabase.instance.ref().child("All Ride Request").child(userRideRequestId).once().then((snapData){
         if(snapData.snapshot.value != null){
 
-          audioPlayer.open(Audio());
+          audioPlayer.open(Audio("music/music_notification.mp3"));
           audioPlayer.play();
 
           double originLat = double.parse((snapData.snapshot.value! as Map)["origin"]["latitude"]);
@@ -71,11 +71,13 @@ class PushNotificationSystem{
 
           showDialog(
               context: context,
-              builder: (BuildContext context) => NotificationDialogBox()
+              builder: (BuildContext context) => NotificationDialogBox(
+                userRideRequestDetails: userRideRequestDetails,
+              )
           );
         }
         else{
-          Fluttertoast.showToast(msg: "This Ride Request Id do not exits");
+          Fluttertoast.showToast(msg: "This Ride Request Id do not exists");
         }
      });
    }
@@ -84,5 +86,19 @@ class PushNotificationSystem{
         Navigator.pop(context);
       }
  });
+ }
+
+ Future generateAndGetToken() async {
+    String? registrationToken = await messaging.getToken();
+    print("FCM registration Token: ${registrationToken}");
+
+    FirebaseDatabase.instance.ref()
+      .child("drivers")
+      .child(firebaseAuth.currentUser!.uid)
+      .child("token")
+      .set(registrationToken);
+
+    messaging.subscribeToTopic("allDrivers");
+    messaging.subscribeToTopic("allUsers");
  }
 }
