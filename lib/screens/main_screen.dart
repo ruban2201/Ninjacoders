@@ -28,6 +28,7 @@ import 'package:usg_app_user/widgets/progress_dialog.dart';
 
 import '../infoHandler/app_info.dart';
 import '../models/directions.dart';
+import '../widgets/pay_fare_amount_dialog.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -56,7 +57,7 @@ class _MainScreenState extends State<MainScreen> {
   double searchLocationContainerHeight = 220;
   double waitingResponsefromDriverContainerHeight = 0;
   double assignedDriverInfoContainerHeight = 0;
-  double suggestedRidesCointainerHeight = 0;
+  double suggestedRidesContainerHeight = 0;
   double searchingForDriverContainerHeight = 0;
 
   Position? userCurrentPosition;
@@ -194,7 +195,7 @@ class _MainScreenState extends State<MainScreen> {
 
   createActiveNearByDriverIconMarker() async {
     if (activeNearbyIcon == null) {
-      ByteData byteData = await rootBundle.load('images/car3.png');
+      ByteData byteData = await rootBundle.load('images/car2.png');
       Uint8List byteList = byteData.buffer.asUint8List();
 
       // Create a BitmapDescriptor from the loaded image
@@ -327,7 +328,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void showSuggestedRidesContainer(){
     setState(() {
-      suggestedRidesCointainerHeight = 400;
+      suggestedRidesContainerHeight = 400;
       bottomPaddingOfMap = 400;
 
     });
@@ -444,8 +445,8 @@ class _MainScreenState extends State<MainScreen> {
          }
 
          //status = onTrip
-         if(userRideRequestStatus == "onTrip"){
-           updateRechingTimeToUserDropOffLocation(driverCurrentPositionLatLng);
+         if(userRideRequestStatus == "ontrip"){
+           updateReachingTimeToUserDropOffLocation(driverCurrentPositionLatLng);
          }
          
          if(userRideRequestStatus == "ended"){
@@ -455,7 +456,7 @@ class _MainScreenState extends State<MainScreen> {
              var response = await showDialog(
                context: context,
                builder: (BuildContext context) => PayFareAmountDialog(
-                // fareAmount: fareAmount,
+                 fareAmount: fareAmount,
                )
             );
              
@@ -506,7 +507,7 @@ class _MainScreenState extends State<MainScreen> {
 
     for(int i = 0; i < driversList.length; i++){
       if(driversList[i]["car_details"]["type"] == selectedVehicleType){
-        //AssistantMethods.sendNotificationToDriverNow(driversList[i]["token"], referenceRideRequest!.key!, context);
+       AssistantMethods.sendNotificationToDriverNow(driversList[i]["token"], referenceRideRequest!.key!, context);
       }
     }
 
@@ -514,7 +515,7 @@ class _MainScreenState extends State<MainScreen> {
 
     showSearchingForDriversContainer();
 
-    await FirebaseDatabase.instance.ref().child("All Ride Requests").child(referenceRideRequest!.key!).child("driverId").onValue.listen((eventRideRequestSnapshot) {
+    await FirebaseDatabase.instance.ref().child("All Ride Request").child(referenceRideRequest!.key!).child("driverId").onValue.listen((eventRideRequestSnapshot) {
     print("EventSnapshot: ${eventRideRequestSnapshot.snapshot.value}");
       if(eventRideRequestSnapshot.snapshot.value != null){
         if(eventRideRequestSnapshot.snapshot.value != "waiting"){
@@ -537,14 +538,14 @@ class _MainScreenState extends State<MainScreen> {
         return;
       }
       setState(() {
-        driverRideStatus = "Driver is coming: " + directionDetailsInfo.distance_text.toString();
+        driverRideStatus = "Driver is coming: " + directionDetailsInfo.duration_text.toString();
       });
 
       requestPositionInfo = true;
     }
   }
 
-  updateRechingTimeToUserDropOffLocation(driverCurrentPositionLatLng) async {
+  updateReachingTimeToUserDropOffLocation(driverCurrentPositionLatLng) async {
     if(requestPositionInfo == true){
       requestPositionInfo = false;
 
@@ -576,7 +577,7 @@ class _MainScreenState extends State<MainScreen> {
       waitingResponsefromDriverContainerHeight = 0;
       searchLocationContainerHeight = 0;
       assignedDriverInfoContainerHeight = 200;
-      suggestedRidesCointainerHeight = 0;
+      suggestedRidesContainerHeight = 0;
       bottomPaddingOfMap = 200;
     });
   }
@@ -820,7 +821,7 @@ class _MainScreenState extends State<MainScreen> {
                                     showSuggestedRidesContainer();
                                   }
                                   else{
-                                    Fluttertoast.showToast(msg: "Please selsect destination location");
+                                    Fluttertoast.showToast(msg: "Please select destination location");
                                   }
                                 },
                                 child: Text(
@@ -855,7 +856,7 @@ class _MainScreenState extends State<MainScreen> {
               right:0,
               bottom: 0,
               child: Container(
-                height: suggestedRidesCointainerHeight,
+                height: suggestedRidesContainerHeight,
                 decoration: BoxDecoration(
                   color: darkTheme ? Colors.black : Colors.white,
                   borderRadius: BorderRadius.only(
@@ -956,7 +957,7 @@ class _MainScreenState extends State<MainScreen> {
                               padding: EdgeInsets.all(25.0),
                               child: Column(
                                 children: [
-                                  Image.asset("image/car2.png",scale:2,),
+                                  Image.asset("images/car2.png",scale:2,),
 
                                   SizedBox(height: 8,),
 
@@ -971,7 +972,7 @@ class _MainScreenState extends State<MainScreen> {
                                   SizedBox(height: 2,),
 
                                   Text(
-                                      tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *2)*107).toStringAsFixed(1)}"
+                                      tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *2)*5.7).toStringAsFixed(1)}"
                                       :"null",
                                    style: TextStyle(
                                      color: Colors.grey,
@@ -999,12 +1000,12 @@ class _MainScreenState extends State<MainScreen> {
                                   padding: EdgeInsets.all(25.0),
                                   child: Column(
                                     children: [
-                                      Image.asset("image/car2.png",scale:2,),
+                                      Image.asset("images/car2.png",scale:2,),
 
                                       SizedBox(height: 8,),
 
                                       Text(
-                                        "Car",
+                                        "CNG",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black,
@@ -1014,7 +1015,7 @@ class _MainScreenState extends State<MainScreen> {
                                       SizedBox(height: 2,),
 
                                       Text(
-                                          tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *1.5)*107).toStringAsFixed(1)}"
+                                          tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *1.5)*5.7).toStringAsFixed(1)}"
                                               :"null",
                                           style: TextStyle(
                                             color: Colors.grey,
@@ -1042,12 +1043,12 @@ class _MainScreenState extends State<MainScreen> {
                                   padding: EdgeInsets.all(25.0),
                                   child: Column(
                                     children: [
-                                      Image.asset("image/car2.png",scale:2,),
+                                      Image.asset("images/car2.png",scale:2,),
 
                                       SizedBox(height: 8,),
 
                                       Text(
-                                        "Car",
+                                        "Bike",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black,
@@ -1057,7 +1058,7 @@ class _MainScreenState extends State<MainScreen> {
                                       SizedBox(height: 2,),
 
                                       Text(
-                                          tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *0.8)*107).toStringAsFixed(1)}"
+                                          tripDirectionDetailsInfo != null ? "RM ${((AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetailsInfo!) *0.8)*5.7).toStringAsFixed(1)}"
                                               :"null",
                                           style: TextStyle(
                                             color: Colors.grey,
@@ -1082,7 +1083,7 @@ class _MainScreenState extends State<MainScreen> {
                             saveRideRequestInformation(selectedVehicleType);
                           }
                           else{
-                            Fluttertoast.showToast(msg: "Please select a vechile from \n suggested rides.");
+                            Fluttertoast.showToast(msg: "Please select a vehicle from \n suggested rides.");
                           }
                         },
                         child: Container(
@@ -1112,7 +1113,80 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
 
-            )
+            ),
+
+            //Requesting A Ride
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: searchingForDriverContainerHeight,
+                decoration: BoxDecoration(
+                  color: darkTheme ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      LinearProgressIndicator(
+                        color: darkTheme ? Colors.amber.shade400 : Colors.blue,
+                      ),
+
+                      SizedBox(height: 10,),
+
+                      Center(
+                        child: Text(
+                          "Searching For a Driver...",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 20,),
+
+                      GestureDetector(
+                        onTap: () {
+                          referenceRideRequest!.remove();
+                          setState(() {
+                            searchingForDriverContainerHeight = 0;
+                            suggestedRidesContainerHeight = 0;
+                          });
+
+                        },
+                        child: Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: darkTheme ? Colors.black : Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(width: 1, color: Colors.grey),
+                          ),
+                          child: Icon(Icons.close, size: 25,),
+                        ),
+                      ),
+
+                      SizedBox(height: 15,),
+
+                      Container(
+                        width: double.infinity,
+                        child: Text(
+                          "Cancel",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
             // Positioned(
            // top: 40,

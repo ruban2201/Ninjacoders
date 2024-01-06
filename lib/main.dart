@@ -5,6 +5,7 @@ import 'package:usg_app_user/screens/main_screen.dart';
 import 'package:usg_app_user/screens/search_places_screen.dart';
 import 'package:usg_app_user/splashScreen/splash_screen.dart';
 import 'package:usg_app_user/themeProvider/theme_provider.dart';
+import 'package:usg_app_user/widgets/pay_fare_amount_dialog.dart';
 
 import 'infoHandler/app_info.dart';
 
