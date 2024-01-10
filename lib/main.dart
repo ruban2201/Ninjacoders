@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:usg_app_drivers/splashScreen/splash_screen.dart';
 import 'package:usg_app_drivers/themeProvider/theme_provider.dart';
+import 'package:usg_app_drivers/widgets/fare_amount_collection_dialog.dart';
 
 
 import 'infoHandler/app_info.dart';

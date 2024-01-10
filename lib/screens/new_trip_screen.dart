@@ -11,6 +11,7 @@ import 'package:usg_app_drivers/Assistants/assistant_methods.dart';
 import 'package:usg_app_drivers/global/global.dart';
 import 'package:usg_app_drivers/models/user_ride_request_information.dart';
 import 'package:usg_app_drivers/splashScreen/splash_screen.dart';
+import 'package:usg_app_drivers/widgets/fare_amount_collection_dialog.dart';
 import 'package:usg_app_drivers/widgets/progress_dialog.dart';
 
 class NewTripScreen extends StatefulWidget {
@@ -35,7 +36,9 @@ class _NewTripScreenState extends State<NewTripScreen> {
     zoom: 14.4746,
   );
 
-  String ? buttonTittle = "Arrived";
+  String? buttonTitle = "Arrived";
+  Color? buttonColor = Colors.green;
+
 
   Set<Marker> setOfMarkers = Set<Marker>();
   Set<Circle> setOfCircle = Set<Circle>();
@@ -290,6 +293,53 @@ class _NewTripScreenState extends State<NewTripScreen> {
 
     }
 
+    endTripNow() async {
+      showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) => ProgressDialog(message: "Please Wait....",)
+      );
+      
+      //get the tripDirectionDetails = distance travelled
+      var currentDriverPositionLatLng = LatLng(onlineDriverCurrentPosition!.latitude, onlineDriverCurrentPosition!.longitude);
+      
+      var tripDirectionDetails = await AssistantMethods.obtainOriginToDestinationDirectionDetails(currentDriverPositionLatLng, widget.userRideRequestDetails!.originLatLng!);
+
+      //fare amount
+      double totalFareAmount = AssistantMethods.calculateFareAmountFromOriginToDestination(tripDirectionDetails);
+      
+      FirebaseDatabase.instance.ref().child("All Ride Request").child(widget.userRideRequestDetails!.rideRequestId!).child("fareAmount").set(totalFareAmount.toString());
+
+      FirebaseDatabase.instance.ref().child("All Ride Request").child(widget.userRideRequestDetails!.rideRequestId!).child("status").set("ended");
+
+      Navigator.pop(context);
+
+      //display fare amount in dialog box
+      showDialog(
+          context: context,
+          builder: (BuildContext context) => FareAmountCollectionDialog(
+            totalFareAmount: totalFareAmount,
+          )
+      );
+
+      //save fare amount to driver total earnings
+      saveFareAmountToDriverEarnings(totalFareAmount);
+    }
+
+  saveFareAmountToDriverEarnings(double totalFareAmount){
+    FirebaseDatabase.instance.ref().child("drivers").child(firebaseAuth.currentUser!.uid).child("earnings").once().then((snap) {
+      if(snap.snapshot.value != null) {
+        double oldEarnings = double.parse(snap.snapshot.value.toString());
+        double driverTotalEarnings = totalFareAmount + oldEarnings;
+
+        FirebaseDatabase.instance.ref().child("drivers").child(firebaseAuth.currentUser!.uid).child("earnings").set(driverTotalEarnings.toString());
+      }
+      else{
+        FirebaseDatabase.instance.ref().child("drivers").child(firebaseAuth.currentUser!.uid).child("earnings").set(totalFareAmount.toString());
+      }
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -324,7 +374,7 @@ class _NewTripScreenState extends State<NewTripScreen> {
 
               var userPickUpLatLng = widget.userRideRequestDetails!.originLatLng;
 
-              drawPolyLineFromOriginToDestination(driverCurrentLatLng, userPickUpLatLng, darkTheme);
+              drawPolyLineFromOriginToDestination(driverCurrentLatLng, userPickUpLatLng!, darkTheme);
 
               getDriverLocationUpdatesAtRealTime();
             },
@@ -454,10 +504,57 @@ class _NewTripScreenState extends State<NewTripScreen> {
                       SizedBox(height: 10,),
 
                       ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            //driver has arrived at user PickUp Location - Arrived Button
+                            if(rideRequestStatus == "accepted"){
+                              rideRequestStatus = "arrived";
+                              
+                              FirebaseDatabase.instance.ref().child("All Ride Request").child(widget.userRideRequestDetails!.rideRequestId!).child("status").set(rideRequestStatus);
+
+                              setState(() {
+                                buttonTitle = "Let's Go";
+                                buttonColor = Colors.lightGreen;
+                              });
+
+                              showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (BuildContext context) => ProgressDialog(message: "Loading...",)
+                              );
+
+                              await drawPolyLineFromOriginToDestination(
+                                  widget.userRideRequestDetails!.originLatLng!,
+                                  widget.userRideRequestDetails!.destinationLatLng!,
+                                  darkTheme
+                              );
+
+                              Navigator.pop(context);
+                            }
+                            //User has been pickup from the user's current location - Let's Go Button
+                            else if(rideRequestStatus == "arrived"){
+                              rideRequestStatus = "ontrip";
+
+                              FirebaseDatabase.instance.ref().child("All Ride Request").child(widget.userRideRequestDetails!.rideRequestId!).child("status").set(rideRequestStatus);
+
+                              setState(() {
+                                buttonTitle = "End Trip";
+                                buttonColor = Colors.red;
+                              });
+                            }
+                            //Users or driver has reached the drop-off location - End Trip Button
+                            else if(rideRequestStatus == "ontrip") {
+                              endTripNow();
+                            }
+
+                          },
                          icon: Icon(Icons.directions_car, color: darkTheme ? Colors.black : Colors.white, size: 25,),
                         label: Text(
-
+                          buttonTitle!,
+                          style: TextStyle(
+                            color: darkTheme ? Colors.black : Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         )
                       ),
 

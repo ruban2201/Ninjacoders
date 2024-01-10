@@ -17,28 +17,29 @@ import '../models/user_model.dart';
 
 class AssistantMethods {
 
-  static void readCurrentOnlineUserInfo() async{
+  static void readCurrentOnlineUserInfo() async {
     currentUser = firebaseAuth.currentUser;
     DatabaseReference userRef = FirebaseDatabase.instance
-      .ref()
-      .child("users")
-      .child(currentUser!.uid);
+        .ref()
+        .child("users")
+        .child(currentUser!.uid);
 
     userRef.once().then((snap) {
-      if(snap.snapshot.value != null) {
+      if (snap.snapshot.value != null) {
         userModelCurrentInfo = UserModel.fromSnapshot(snap.snapshot);
       }
     });
   }
 
-  static Future<String> searchAddressForGeographicsCoordinates(Position position, context) async {
-
-    String apiUrl = "https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$mapKey";
+  static Future<String> searchAddressForGeographicsCoordinates(
+      Position position, context) async {
+    String apiUrl = "https://maps.googleapis.com/maps/api/geocode/json?latlng=${position
+        .latitude},${position.longitude}&key=$mapKey";
     String humanReadableAddress = "";
 
     var requestResponse = await RequestAssistant.receiveRequest(apiUrl);
 
-    if(requestResponse != "Error Occured. Failed. No Response."){
+    if (requestResponse != "Error Occured. Failed. No Response.") {
       humanReadableAddress = requestResponse["results"][0]["formatted_address"];
 
       Directions userPickUpAddress = Directions();
@@ -46,37 +47,75 @@ class AssistantMethods {
       userPickUpAddress.locationLongitude = position.longitude;
       userPickUpAddress.locationName = humanReadableAddress;
 
-      Provider.of<AppInfo>(context, listen: false).updatePickUpLocationAddress(userPickUpAddress);
+      Provider.of<AppInfo>(context, listen: false).updatePickUpLocationAddress(
+          userPickUpAddress);
     }
 
     return humanReadableAddress;
   }
 
-  static Future<DirectionDetailsInfo> obtainOriginToDestinationDirectionDetails(LatLng originPosition, LatLng destinationPosition) async {
+  static Future<DirectionDetailsInfo> obtainOriginToDestinationDirectionDetails(
+      LatLng originPosition, LatLng destinationPosition) async {
+    String urlOriginToDestinationDirectionDetails = "https://maps.googleapis.com/maps/api/directions/json?origin=${originPosition
+        .latitude},${originPosition.longitude}&destination=${destinationPosition
+        .latitude},${destinationPosition.longitude}&key=$mapKey";
 
-    String urlOriginToDestinationDirectionDetails = "https://maps.googleapis.com/maps/api/directions/json?origin=${originPosition.latitude},${originPosition.longitude}&destination=${destinationPosition.latitude},${destinationPosition.longitude}&key=$mapKey";
-    
-    var responseDirectionApi = await RequestAssistant.receiveRequest(urlOriginToDestinationDirectionDetails);
+    var responseDirectionApi = await RequestAssistant.receiveRequest(
+        urlOriginToDestinationDirectionDetails);
 
     // if(responseDirectionApi == "Error Occurred. Failed. No Response."){
     //   return "";
     // }
 
     DirectionDetailsInfo directionDetailsInfo = DirectionDetailsInfo();
-    directionDetailsInfo.e_points = responseDirectionApi["routes"][0]["overview_polyline"]["points"];
+    directionDetailsInfo.e_points =
+    responseDirectionApi["routes"][0]["overview_polyline"]["points"];
 
-    directionDetailsInfo.distance_text = responseDirectionApi["routes"][0]["legs"][0]["distance"]["text"];
-    directionDetailsInfo.distance_value = responseDirectionApi["routes"][0]["legs"][0]["distance"]["value"];
+    directionDetailsInfo.distance_text =
+    responseDirectionApi["routes"][0]["legs"][0]["distance"]["text"];
+    directionDetailsInfo.distance_value =
+    responseDirectionApi["routes"][0]["legs"][0]["distance"]["value"];
 
-    directionDetailsInfo.duration_text = responseDirectionApi["routes"][0]["legs"][0]["duration"]["text"];
-    directionDetailsInfo.duration_value = responseDirectionApi["routes"][0]["legs"][0]["duration"]["value"];
+    directionDetailsInfo.duration_text =
+    responseDirectionApi["routes"][0]["legs"][0]["duration"]["text"];
+    directionDetailsInfo.duration_value =
+    responseDirectionApi["routes"][0]["legs"][0]["duration"]["value"];
 
     return directionDetailsInfo;
-
   }
 
   static pauseLiveLocationUpdates() {
     streamSubscriptionPosition!.pause();
     Geofire.removeLocation(firebaseAuth.currentUser!.uid);
+  }
+
+  static double calculateFareAmountFromOriginToDestination(
+      DirectionDetailsInfo directionDetailsInfo) {
+    double timeTravelledFareAmountPerMinute = (directionDetailsInfo
+        .duration_value! / 60) * 0.1;
+    double distanceTravelledFareAmountPerKilometer = (directionDetailsInfo
+        .duration_value! / 1000) * 0.1;
+
+    double totalFareAmount = timeTravelledFareAmountPerMinute +
+        distanceTravelledFareAmountPerKilometer;
+    double localCurrencyTotalFare = totalFareAmount * 107;
+
+    if (driverVehicleType == "Bike") {
+      double resultFareAmount = ((localCurrencyTotalFare.truncate()) * 0.8);
+      resultFareAmount;
+    }
+    else if (driverVehicleType == "CNG") {
+      double resultFareAmount = ((localCurrencyTotalFare.truncate()) * 1.5);
+      resultFareAmount;
+    }
+    else if (driverVehicleType == "Car") {
+      double resultFareAmount = ((localCurrencyTotalFare.truncate()) * 2);
+      resultFareAmount;
+    }
+    else {
+      return localCurrencyTotalFare.truncate().toDouble();
+    }
+
+    return localCurrencyTotalFare.truncate().toDouble();
   }
 }
