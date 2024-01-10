@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:ffi';
+//import 'dart:ffi';
 import 'dart:typed_data';
-import 'dart:ui';
-
+//import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import'package:flutter/material.dart';
@@ -15,6 +15,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:location/location.dart' as loc;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:usg_app_user/Assistants/assistant_methods.dart';
 import 'package:usg_app_user/Assistants/geofire_assistant.dart';
 import 'package:usg_app_user/global/global.dart';
@@ -29,6 +30,15 @@ import 'package:usg_app_user/widgets/progress_dialog.dart';
 import '../infoHandler/app_info.dart';
 import '../models/directions.dart';
 import '../widgets/pay_fare_amount_dialog.dart';
+
+Future<void> _makePhoneCall(String url) async {
+  if(await canLaunch(url)) {
+    await launch(url);
+  }
+  else {
+    throw "Could Not Launch $url";
+  }
+}
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -193,13 +203,12 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  createActiveNearByDriverIconMarker() async {
+  createActiveNearByDriverIconMarker(){
     if (activeNearbyIcon == null) {
-      ByteData byteData = await rootBundle.load('images/car2.png');
-      Uint8List byteList = byteData.buffer.asUint8List();
-
-      // Create a BitmapDescriptor from the loaded image
-      activeNearbyIcon = BitmapDescriptor.fromBytes(byteList);
+      ImageConfiguration imageConfiguration = createLocalImageConfiguration(context, size: Size(2, 2));
+      BitmapDescriptor.fromAssetImage(imageConfiguration, "images/car_top_view.png").then((value){
+        activeNearbyIcon = value;
+      });
     }
   }
 
@@ -411,13 +420,13 @@ class _MainScreenState extends State<MainScreen> {
 
        if ((eventSnap.snapshot.value as Map)["driverPhone"] != null){
          setState(() {
-           driverCarDetails = (eventSnap.snapshot.value as Map)["driverPhone"].toString();
+           driverPhone = (eventSnap.snapshot.value as Map)["driverPhone"].toString();
          });
        }
 
        if ((eventSnap.snapshot.value as Map)["driverName"] != null){
          setState(() {
-           driverCarDetails = (eventSnap.snapshot.value as Map)["driverName"].toString();
+           driverName = (eventSnap.snapshot.value as Map)["driverName"].toString();
          });
        }
 
@@ -1187,6 +1196,93 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
             ),
+
+            //UI for displaying assigned driver information
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: assignedDriverInfoContainerHeight,
+                decoration: BoxDecoration(
+                  color: darkTheme ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.circular(10)
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Column(
+                    children: [
+                      Text(driverRideStatus,style: TextStyle(fontWeight: FontWeight.bold),),
+                      SizedBox(height: 5,),
+                      Divider(thickness: 1, color: darkTheme ? Colors.grey : Colors.grey[300],),
+                      SizedBox(height: 5,),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: darkTheme ? Colors.amber.shade400 : Colors.lightBlue,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(Icons.person, color: darkTheme ? Colors.black : Colors.white,),
+                              ),
+
+                              SizedBox(width: 10,),
+                              
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(driverName, style: TextStyle(fontWeight: FontWeight.bold),),
+
+                                  Row(children: [
+                                    Icon(Icons.star,color: Colors.orange,),
+
+                                    SizedBox(width: 5,),
+                                    
+                                    Text("4.5",
+                                    style: TextStyle(
+                                      color: Colors.grey
+                                    ),
+                                    )
+                                  ],)
+                                ],
+                              )
+                            ],
+                          ),
+
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Image.asset("images/car.png", scale: 3,),
+                              
+                              Text(driverCarDetails, style: TextStyle(fontSize: 12),),
+                            ],
+                          )
+                        ],
+                      ),
+
+                      SizedBox(height: 5,),
+                      Divider(thickness: 1, color: darkTheme ? Colors.grey : Colors.grey[300],),
+                      ElevatedButton.icon(
+                          onPressed: () {
+                            _makePhoneCall("tel: ${driverPhone}");
+                          },
+                          style: ElevatedButton.styleFrom(primary: darkTheme ? Colors.amber.shade400 : Colors.blue),
+                          icon: Icon(Icons.phone),
+                          label: Text("Call Driver"),
+
+
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+
 
             // Positioned(
            // top: 40,
