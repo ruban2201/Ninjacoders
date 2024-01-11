@@ -9,6 +9,7 @@ import 'package:usg_app_user/Assistants/request_assistant.dart';
 import 'package:usg_app_user/global/global.dart';
 import 'package:usg_app_user/global/map_key.dart';
 import 'package:usg_app_user/models/directions.dart';
+import 'package:usg_app_user/models/trips_history_model.dart';
 import 'package:usg_app_user/models/user_model.dart';
 
 import '../infoHandler/app_info.dart';
@@ -116,6 +117,41 @@ class AssistantMethods {
       headers: headerNotification,
       body: jsonEncode(officialNotificationFormat),
     );
+  }
 
+  //retrieve the trips keys for online user
+  //trip key = ride request key
+  static void  readTripsKeysForOnlineUser(context){
+    FirebaseDatabase.instance.ref().child("All Ride Request").orderByChild("userName").equalTo(userModelCurrentInfo!.name).once().then((snap) {
+      if(snap.snapshot.value != null){
+        Map keysTripsId = snap.snapshot.value as  Map;
+
+        //count total number of trips and share it with provider
+        int overAllTripsCounter = keysTripsId.length;
+        Provider.of<AppInfo>(context, listen: false).updateOverAllTripsCounter(overAllTripsCounter);
+
+        //get trips keys data - read trips complete information
+        readTripsHistoryInformation(context);
+      }
+    });
+  }
+  static void readTripsHistoryInformation(context){
+    var tripsAllKeys = Provider.of<AppInfo>(context, listen: false).historyTripsKeysList;
+
+    for(String eachKey in tripsAllKeys){
+      FirebaseDatabase.instance.ref()
+          .child("AlL Ride Request")
+          .child(eachKey)
+          .once()
+          .then((snap)
+      {
+        var eachTripsHistory = TripsHistoryModel.fromSnapshot(snap.snapshot);
+
+        if((snap.snapshot.value as Map) ["status"] == "ended"){
+          //update or add each history to OverAllTrips History data list
+          Provider.of<AppInfo>(context, listen: false).updateOverAllTripsHistoryInformation(eachTripsHistory);
+        }
+      });
+    }
   }
 }

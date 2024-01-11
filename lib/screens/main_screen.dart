@@ -23,6 +23,7 @@ import 'package:usg_app_user/global/map_key.dart';
 import 'package:usg_app_user/models/active_nearby_available_drivers.dart';
 import 'package:usg_app_user/screens/drawer_screen.dart';
 import 'package:usg_app_user/screens/precise_pickup_location.dart';
+import 'package:usg_app_user/screens/rate_driver_screen.dart';
 import 'package:usg_app_user/screens/search_places_screen.dart';
 import 'package:usg_app_user/splashScreen/splash_screen.dart';
 import 'package:usg_app_user/widgets/progress_dialog.dart';
@@ -121,8 +122,8 @@ class _MainScreenState extends State<MainScreen> {
     userEmail = userModelCurrentInfo!.email!;
 
     initializeGeoFireListener();
-    //
-    //AssistantMethods.readTipsKeysForOnlineUser(context);
+
+    AssistantMethods.readTripsKeysForOnlineUser(context);
 
   }
   initializeGeoFireListener() {
@@ -430,6 +431,12 @@ class _MainScreenState extends State<MainScreen> {
          });
        }
 
+       if ((eventSnap.snapshot.value as Map)["ratings"] != null){
+         setState(() {
+           driverRatings = (eventSnap.snapshot.value as Map)["ratings"].toString();
+         });
+       }
+
        if ((eventSnap.snapshot.value as Map)["status"] != null){
          setState(() {
            userRideRequestStatus = (eventSnap.snapshot.value as Map)["status"].toString();
@@ -473,7 +480,9 @@ class _MainScreenState extends State<MainScreen> {
                //user can rate the driver noe
                if((eventSnap.snapshot.value as Map)["driverId"] != null){
                  String assignedDriverId = (eventSnap.snapshot.value as Map)["driverId"].toString();
-                // Navigator.push(context, MaterialPageRoute(builder: (c) => RateDriverScreen()));
+                 Navigator.push(context, MaterialPageRoute(builder: (c) => RateDriverScreen(
+                   assignedDriverId: assignedDriverId,
+                 )));
 
                  referenceRideRequest!.onDisconnect();
                  tripRideRequestInfoStreamSubscription!.cancel();
@@ -1242,7 +1251,7 @@ class _MainScreenState extends State<MainScreen> {
 
                                     SizedBox(width: 5,),
                                     
-                                    Text("4.5",
+                                    Text(driverRatings,
                                     style: TextStyle(
                                       color: Colors.grey
                                     ),
