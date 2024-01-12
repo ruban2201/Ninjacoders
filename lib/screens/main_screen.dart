@@ -139,6 +139,7 @@ class _MainScreenState extends State<MainScreen> {
           switch(callBack) {
             //whenever any driver becomes active/online
             case Geofire.onKeyEntered:
+              GeoFireAssistant.activeNearByAvailableDriverList.clear();
               ActiveNearByAvailableDrivers activeNearByAvailableDrivers = ActiveNearByAvailableDrivers();
               activeNearByAvailableDrivers.locationLatitude = map["latitude"];
               activeNearByAvailableDrivers.locationLongitude = map["longitude"];
@@ -626,8 +627,9 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
 
-    createActiveNearByDriverIconMarker();
     bool darkTheme = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    createActiveNearByDriverIconMarker();
+
 
 
     //var provider;
@@ -653,8 +655,14 @@ class _MainScreenState extends State<MainScreen> {
                   _controllerGoogleMap.complete(controller);
                   newGoogleMapController = controller;
 
-                  setState(() {
+                  if(darkTheme == true){
+                    setState(() {
+                      blackThemeGoogleMap(newGoogleMapController);
+                    });
+                  }
 
+                  setState(() {
+                     bottomPaddingOfMap = 200;
                   });
 
                   locateUserPosition();
